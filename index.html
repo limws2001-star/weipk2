@@ -1069,38 +1069,14 @@ var isSyncing = false;
 // Send data via GET to avoid CORS (GAS doesn't support CORS for POST from external)
 function gasWrite(payload) {
   if(GAS_URL === 'YOUR_GAS_URL_HERE') return Promise.resolve({success:true});
-  return new Promise(function(resolve) {
-    // 用 JSONP 方式绕过 CORS 限制
-    var callbackName = 'cb_' + Date.now();
-    var params = Object.keys(payload).map(function(k){
-      return encodeURIComponent(k) + '=' + encodeURIComponent(JSON.stringify(payload[k]));
-    }).join('&');
-    params += '&callback=' + callbackName;
-
-    window[callbackName] = function(data) {
-      resolve(data);
-      delete window[callbackName];
-      document.body.removeChild(script);
-    };
-
-    var script = document.createElement('script');
-    script.src = GAS_URL + '?' + params;
-    script.onerror = function() {
-      resolve({success:false});
-      delete window[callbackName];
-      document.body.removeChild(script);
-    };
-    document.body.appendChild(script);
-
-    // 5秒超时
-    setTimeout(function() {
-      if(window[callbackName]) {
-        resolve({success:true}); // 假设成功
-        delete window[callbackName];
-        try { document.body.removeChild(script); } catch(e){}
-      }
-    }, 5000);
-  });
+  var params = Object.keys(payload).map(function(k){
+    return encodeURIComponent(k) + '=' + encodeURIComponent(JSON.stringify(payload[k]));
+  }).join('&');
+  var url = GAS_URL + '?' + params;
+  // 用 no-cors 模式跟随重定向，fire-and-forget
+  fetch(url, { method:'GET', mode:'no-cors', redirect:'follow' })
+    .catch(function(){});
+  return Promise.resolve({success:true});
 }
 
 function syncAll(silent) {
