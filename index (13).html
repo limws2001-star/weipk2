@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeIP 5-6岁班级管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange-deep:#C94B1A; --orange-main:#E8601E; --orange-mid:#F07A38;
+    --orange-light:#F9A96A; --orange-pale:#FEF0E6; --orange-card:#D95520;
+    --yellow-accent:#F5C842; --teal-accent:#2BB5A0; --blue-accent:#4A90D9;
+    --purple-accent:#9B6BD4; --text-dark:#1A1A1A; --text-mid:#5A4A3A; --text-light:#9A8A7A;
+    --sidebar-w:225px; --radius:14px; --radius-sm:8px;
+    --shadow:0 4px 20px rgba(200,80,30,0.12); --shadow-lg:0 8px 32px rgba(200,80,30,0.18);
+  }
+  html,body{height:100%;font-family:'Helvetica Neue','PingFang SC','Microsoft YaHei',sans-serif;background:var(--orange-pale);color:var(--text-dark);}
+
+  /* SIDEBAR */
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:linear-gradient(180deg,var(--orange-deep) 0%,var(--orange-main) 100%);display:flex;flex-direction:column;z-index:100;box-shadow:4px 0 24px rgba(180,60,10,0.2);}
+  .sidebar-brand{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,0.15);}
+  .sidebar-logo{width:40px;height:40px;background:var(--yellow-accent);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:9px;}
+  .sidebar-brand h2{color:#fff;font-size:13.5px;font-weight:700;line-height:1.3;}
+  .sidebar-brand p{color:rgba(255,255,255,0.6);font-size:10.5px;margin-top:3px;}
+  .nav-section{padding:14px 10px 0;}
+  .nav-label{color:rgba(255,255,255,0.45);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 8px 7px;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);color:rgba(255,255,255,0.78);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+  .nav-item:hover{background:rgba(255,255,255,0.14);color:#fff;}
+  .nav-item.active{background:rgba(255,255,255,0.22);color:#fff;font-weight:700;}
+  .nav-icon{font-size:15px;width:19px;text-align:center;}
+  .nav-badge{margin-left:auto;background:var(--yellow-accent);color:var(--orange-deep);border-radius:20px;padding:1px 7px;font-size:10.5px;font-weight:700;}
+  .teacher-section{padding:14px 10px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.15);}
+  .teacher-label{color:rgba(255,255,255,0.45);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 8px 9px;}
+  .teacher-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:var(--radius-sm);}
+  .teacher-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+  .teacher-name{color:rgba(255,255,255,0.82);font-size:12px;}
+  .teacher-count{margin-left:auto;color:rgba(255,255,255,0.5);font-size:11px;}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{padding:16px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;background:var(--orange-pale);}
+  .topbar-title h1{font-size:20px;font-weight:800;color:var(--text-dark);display:flex;align-items:center;gap:9px;}
+  .topbar-title p{color:var(--text-light);font-size:11.5px;margin-top:2px;}
+  .topbar-actions{display:flex;gap:9px;align-items:center;flex-shrink:0;}
+  .btn{padding:8px 16px;border-radius:30px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:6px;}
+  .btn-outline{background:#fff;color:var(--orange-main);border:1.5px solid var(--orange-light);}
+  .btn-outline:hover{background:var(--orange-pale);}
+  .btn-primary{background:var(--orange-main);color:#fff;}
+  .btn-primary:hover{background:var(--orange-deep);}
+  .btn-sm{padding:5px 12px;font-size:11.5px;}
+  .btn-teal{background:var(--teal-accent);color:#fff;}
+  .btn-purple{background:var(--purple-accent);color:#fff;}
+  .sync-indicator{display:flex;align-items:center;gap:6px;color:var(--text-light);font-size:11.5px;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--teal-accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .content{padding:18px 28px 40px;flex:1;}
+  .page{display:none;} .page.active{display:block;}
+
+  /* HERO */
+  .hero-banner{background:linear-gradient(135deg,var(--orange-card) 0%,var(--orange-main) 60%,var(--orange-mid) 100%);border-radius:var(--radius);padding:26px 30px;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg);}
+  .hero-banner::before{content:'';position:absolute;top:-40px;right:-40px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,0.06);}
+  .hero-left .year-tag{font-size:11.5px;opacity:.75;font-weight:600;letter-spacing:.05em;margin-bottom:5px;}
+  .hero-left .big-num{font-size:46px;font-weight:900;line-height:1;color:var(--yellow-accent);}
+  .hero-left .sub-title{font-size:19px;font-weight:700;margin-top:4px;}
+  .hero-left .breakdown{font-size:12px;opacity:.8;margin-top:5px;}
+  .hero-stats{display:flex;gap:14px;z-index:1;}
+  .hero-stat-card{background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);border-radius:11px;padding:14px 18px;min-width:120px;text-align:center;border:1px solid rgba(255,255,255,0.2);}
+  .hero-stat-card .stat-num{font-size:30px;font-weight:900;color:var(--yellow-accent);line-height:1;}
+  .hero-stat-card .stat-label{font-size:10.5px;opacity:.8;margin-top:3px;}
+  .hero-stat-card .stat-sublabel{font-size:9.5px;opacity:.6;margin-top:2px;}
+  .progress-ring{position:relative;flex-shrink:0;}
+  .progress-ring svg{transform:rotate(-90deg);}
+  .progress-ring .ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+  .progress-ring .ring-pct{font-size:21px;font-weight:900;color:var(--yellow-accent);}
+  .progress-ring .ring-label{font-size:9.5px;opacity:.75;}
+
+  /* ALERTS */
+  .alerts{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+  .alert-item{padding:12px 16px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:11px;font-size:12.5px;font-weight:500;}
+  .alert-item.warn{background:#FFF3E0;border-left:4px solid #FF9800;color:#7A4D00;}
+  .alert-item.info{background:#E8F5E9;border-left:4px solid #4CAF50;color:#1B5E20;}
+  .alert-item.blue{background:#E3F2FD;border-left:4px solid #2196F3;color:#0D47A1;}
+  .alert-icon{font-size:17px;flex-shrink:0;}
+
+  /* STAT GRID */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px;}
+  .stat-card{background:#fff;border-radius:var(--radius);padding:17px 18px;box-shadow:var(--shadow);}
+  .stat-card .sc-icon{font-size:20px;margin-bottom:4px;}
+  .stat-card .sc-num{font-size:28px;font-weight:900;color:var(--orange-main);line-height:1;}
+  .stat-card .sc-label{font-size:11.5px;color:var(--text-light);font-weight:500;}
+  .stat-card .sc-sub{font-size:10.5px;color:var(--text-light);margin-top:2px;}
+
+  /* CLASS PANELS */
+  .class-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .class-panel{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+  .class-panel-header{display:flex;align-items:center;gap:9px;margin-bottom:14px;}
+  .class-panel-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .class-panel-icon.vkids{background:#FFF3E0;} .class-panel-icon.hanyu{background:#E8F5E9;}
+  .class-panel-icon.booster{background:#EDE7F6;} .class-panel-icon.prep{background:#E3F2FD;}
+  .class-panel-title{flex:1;}
+  .class-panel-title h3{font-size:14px;font-weight:700;}
+  .class-panel-title p{font-size:10.5px;color:var(--text-light);}
+  .class-panel-num{font-size:26px;font-weight:900;}
+  .class-panel-num.vkids{color:var(--orange-main);} .class-panel-num.hanyu{color:var(--teal-accent);}
+  .class-panel-num.booster{color:var(--purple-accent);} .class-panel-num.prep{color:var(--blue-accent);}
+  .mini-progress{height:5px;background:#F0EDE8;border-radius:3px;overflow:hidden;margin-bottom:11px;}
+  .mini-progress-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+  .mini-progress-fill.vkids{background:var(--orange-main);} .mini-progress-fill.hanyu{background:var(--teal-accent);}
+  .mini-progress-fill.booster{background:var(--purple-accent);} .mini-progress-fill.prep{background:var(--blue-accent);}
+  .teacher-tags{display:flex;flex-wrap:wrap;gap:5px;}
+  .teacher-tag{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;}
+  .teacher-tag.orange{background:#FFF0E0;color:var(--orange-deep);}
+  .teacher-tag.teal{background:#E0F7F4;color:#1A7A6E;}
+  .teacher-tag.purple{background:#EDE7F6;color:#6A3DB8;}
+
+  /* PAGE HEADER */
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .page-header h2{font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px;}
+  .page-header-right{display:flex;gap:9px;align-items:center;}
+
+  /* TEACHER FILTER TABS */
+  .teacher-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .teacher-tab{padding:6px 16px;border-radius:20px;border:1.5px solid #E0D8D0;background:#fff;color:var(--text-mid);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
+  .teacher-tab:hover{border-color:var(--orange-light);}
+  .teacher-tab.active{background:var(--orange-main);color:#fff;border-color:var(--orange-main);}
+  .teacher-tab .tab-avatar{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;}
+
+  /* FILTER BAR */
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .filter-chip{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #E8E0D8;background:#fff;color:var(--text-mid);transition:all .15s;}
+  .filter-chip:hover{border-color:var(--orange-light);color:var(--orange-main);}
+  .filter-chip.active{background:var(--orange-main);color:#fff;border-color:var(--orange-main);}
+
+  /* TABLE */
+  .table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .student-table{width:100%;border-collapse:collapse;}
+  .student-table thead th{background:var(--orange-pale);padding:11px 14px;text-align:left;font-size:11.5px;font-weight:700;color:var(--text-mid);border-bottom:1px solid #EDDDD0;}
+  .student-table tbody tr{border-bottom:1px solid #F5F0EB;transition:background .15s;}
+  .student-table tbody tr:hover{background:var(--orange-pale);}
+  .student-table tbody td{padding:10px 14px;font-size:12.5px;color:var(--text-dark);vertical-align:middle;}
+  .student-table tbody tr:last-child{border-bottom:none;}
+  .table-meta{padding:9px 14px;background:var(--orange-pale);border-bottom:1px solid #EDDDD0;font-size:11.5px;color:var(--text-light);display:flex;justify-content:space-between;align-items:center;}
+
+  /* STATUS BADGES */
+  .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;}
+  .status-badge.active{background:#E8F5E9;color:#2E7D32;}
+  .status-badge.pending{background:#FFF3E0;color:#E65100;}
+  .status-badge.converted{background:#EDE7F6;color:#6A3DB8;}
+  .status-badge.trial{background:#E3F2FD;color:#1565C0;}
+  .status-badge.expired{background:#FFEBEE;color:#C62828;}
+  .status-badge.enrolled{background:#E8F5E9;color:#2E7D32;}
+
+  /* CLASS DOTS */
+  .class-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
+  .class-dot.vkids{background:var(--orange-main);} .class-dot.hanyu{background:var(--teal-accent);}
+  .class-dot.booster{background:var(--purple-accent);}
+
+  /* TABLE ACTIONS */
+  .table-action{padding:4px 9px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;border:1.5px solid;background:transparent;transition:all .15s;margin-right:4px;}
+  .table-action.convert{border-color:var(--purple-accent);color:var(--purple-accent);}
+  .table-action.convert:hover{background:#EDE7F6;}
+  .table-action.edit{border-color:var(--orange-light);color:var(--orange-main);}
+  .table-action.edit:hover{background:var(--orange-pale);}
+
+  /* HANYU SPLIT */
+  .hanyu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .hanyu-panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .hanyu-panel-header{padding:14px 18px;border-bottom:1px solid #F0EDE8;display:flex;align-items:center;justify-content:space-between;}
+  .hanyu-panel-header h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .hanyu-count-badge{background:var(--teal-accent);color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;}
+  .hanyu-count-badge.trial{background:var(--blue-accent);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:var(--radius);width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .2s ease;}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{padding:18px 22px;border-bottom:1px solid #EEE;display:flex;align-items:center;justify-content:space-between;}
+  .modal-header h3{font-size:16px;font-weight:800;}
+  .modal-close{background:none;border:none;font-size:21px;cursor:pointer;color:var(--text-light);}
+  .modal-body{padding:22px;}
+  .modal-footer{padding:14px 22px;border-top:1px solid #EEE;display:flex;gap:9px;justify-content:flex-end;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+  .form-group label{font-size:12px;font-weight:700;color:var(--text-mid);}
+  .form-group input,.form-group select,.form-group textarea{padding:9px 13px;border:1.5px solid #E0D8D0;border-radius:var(--radius-sm);font-size:13px;outline:none;transition:border-color .2s;font-family:inherit;color:var(--text-dark);background:#fff;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--orange-main);}
+
+  /* CONVERT MODAL */
+  .convert-info{background:var(--orange-pale);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+  .convert-info .ci-name{font-size:17px;font-weight:800;color:var(--orange-deep);margin-bottom:4px;}
+  .convert-info .ci-meta{font-size:12px;color:var(--text-mid);}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:44px 20px;color:var(--text-light);}
+  .empty-state .empty-icon{font-size:44px;margin-bottom:12px;}
+  .empty-state h3{font-size:15px;font-weight:700;color:var(--text-mid);margin-bottom:5px;}
+
+  /* TIMELINE */
+  .timeline{display:flex;flex-direction:column;gap:0;}
+  .timeline-month{display:flex;gap:18px;padding-bottom:22px;position:relative;}
+  .timeline-month::before{content:'';position:absolute;left:19px;top:38px;bottom:-4px;width:2px;background:#EDD8C8;}
+  .timeline-month:last-child::before{display:none;}
+  .tl-dot{width:40px;height:40px;border-radius:50%;background:var(--orange-main);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;z-index:1;box-shadow:0 2px 10px rgba(200,80,30,0.3);}
+  .tl-dot.past{background:#C8C0B8;} .tl-dot.future{background:#F5C842;color:var(--orange-deep);}
+  .tl-content{flex:1;background:#fff;border-radius:var(--radius);padding:15px 18px;box-shadow:var(--shadow);}
+  .tl-content h4{font-size:13.5px;font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+  .tl-items{display:flex;flex-direction:column;gap:5px;}
+  .tl-item{display:flex;align-items:center;gap:9px;font-size:12px;padding:5px 9px;border-radius:6px;background:var(--orange-pale);}
+  .coming-soon{text-align:center;padding:60px 20px;color:var(--text-light);}
+  .coming-soon .cs-icon{font-size:52px;margin-bottom:14px;}
+  .coming-soon h3{font-size:16px;font-weight:700;color:var(--text-mid);margin-bottom:6px;}
+  .coming-soon p{font-size:13px;}
+
+  /* CALENDAR + TIMELINE LAYOUT */
+  .cal-month-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .cal-nav-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--orange-light);background:#fff;font-size:18px;cursor:pointer;color:var(--orange-main);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cal-nav-btn:hover{background:var(--orange-main);color:#fff;}
+  .cal-month-tabs{display:flex;gap:6px;overflow-x:auto;flex:1;padding:2px 0;}
+  .cal-month-tab{padding:5px 14px;border-radius:20px;border:1.5px solid #E0D8D0;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-mid);white-space:nowrap;transition:all .15s;}
+  .cal-month-tab:hover{border-color:var(--orange-light);color:var(--orange-main);}
+  .cal-month-tab.active{background:var(--orange-main);color:#fff;border-color:var(--orange-main);}
+
+  .cal-tl-layout{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start;}
+  .cal-panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .cal-header{background:linear-gradient(135deg,var(--orange-card),var(--orange-main));padding:16px 18px;}
+  .cal-month-title{font-size:16px;font-weight:800;color:#fff;}
+  .cal-goal{font-size:11.5px;color:rgba(255,255,255,0.8);margin-top:4px;}
+  .cal-grid{padding:12px;}
+  .cal-day-label{display:inline-block;width:calc(100%/7);text-align:center;font-size:11px;font-weight:700;color:var(--text-light);padding:4px 0;}
+  #cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-day{min-height:52px;border-radius:8px;padding:4px;font-size:11px;cursor:pointer;transition:all .15s;border:1.5px solid transparent;position:relative;}
+  .cal-day:hover{background:var(--orange-pale);border-color:var(--orange-light);}
+  .cal-day.has-event{background:#FFF3E0;}
+  .cal-day.has-event:hover{background:#FFE0B2;}
+  .cal-day.today{border-color:var(--orange-main);background:var(--orange-pale);}
+  .cal-day.other-month{opacity:.35;}
+  .cal-day-num{font-weight:700;color:var(--text-dark);margin-bottom:2px;}
+  .cal-day.today .cal-day-num{color:var(--orange-main);}
+  .cal-event-dot{font-size:9.5px;color:var(--orange-deep);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+  .cal-notes-section{border-top:1px solid #F0EDE8;padding:12px 16px;}
+  .cal-notes-title{font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
+  .cal-notes-content{display:flex;flex-direction:column;gap:6px;}
+  .cal-note-item{font-size:12px;color:var(--text-dark);padding:6px 10px;background:var(--orange-pale);border-radius:6px;border-left:3px solid var(--orange-main);}
+
+  /* TIMELINE PANEL */
+  .tl-panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .tl-panel-header{padding:14px 18px;border-bottom:1px solid #F0EDE8;display:flex;align-items:center;justify-content:space-between;}
+  .tl-events-list{padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:600px;overflow-y:auto;}
+  .tl-event-item{display:flex;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid #F0EDE8;transition:all .15s;cursor:pointer;}
+  .tl-event-item:hover{border-color:var(--orange-light);background:var(--orange-pale);}
+  .tl-event-item.type-cb{border-left:4px solid var(--purple-accent);}
+  .tl-event-item.type-pull{border-left:4px solid var(--teal-accent);}
+  .tl-event-item.type-meeting{border-left:4px solid var(--blue-accent);}
+  .tl-event-item.type-note{border-left:4px solid var(--yellow-accent);}
+  .tl-event-item.type-custom{border-left:4px solid var(--orange-main);}
+  .tl-event-date{font-size:11px;font-weight:700;color:var(--orange-main);white-space:nowrap;min-width:40px;}
+  .tl-event-body{flex:1;}
+  .tl-event-title{font-size:13px;font-weight:600;color:var(--text-dark);}
+  .tl-event-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-top:4px;}
+  .tag-cb{background:#EDE7F6;color:#6A3DB8;}
+  .tag-pull{background:#E0F7F4;color:#1A7A6E;}
+  .tag-meeting{background:#E3F2FD;color:#1565C0;}
+  .tag-note{background:#FFF8E1;color:#B8860B;}
+  .tag-custom{background:var(--orange-pale);color:var(--orange-deep);}
+  .tl-event-done{width:20px;height:20px;border-radius:50%;border:2px solid #DDD;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;}
+  .tl-event-done.done{background:var(--teal-accent);border-color:var(--teal-accent);color:#fff;}
+  .tl-icon-btn{width:26px;height:26px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:.5;}
+  .tl-icon-btn:hover{opacity:1;background:#F5F0EB;}
+  .tl-icon-btn.del-btn:hover{background:#FFEBEE;}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--text-dark);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;transform:translateY(60px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:9px;max-width:300px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.success{background:var(--teal-accent);} .toast.error{background:#C62828;}
+
+  .loading-spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .section-divider{height:1px;background:#F0EDE8;margin:18px 0;}
+  .info-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-mid);margin-bottom:6px;}
+  .info-row strong{color:var(--text-dark);}
+
+  /* INLINE TOGGLES */
+  .inline-toggle{padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s;}
+  .toggle-yes{background:#E8F5E9;border-color:#4CAF50;color:#2E7D32;}
+  .toggle-yes:hover{background:#C8E6C9;}
+  .toggle-no{background:#F5F5F5;border-color:#DDD;color:#999;}
+  .toggle-no:hover{background:#FFEBEE;border-color:#EF9A9A;color:#C62828;}
+
+  /* RESULT TAGS */
+  .result-tag{padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s;}
+  .tag-green{background:#E8F5E9;border-color:#4CAF50;color:#2E7D32;}
+  .tag-green:hover{background:#C8E6C9;}
+  .tag-red{background:#FFEBEE;border-color:#EF9A9A;color:#C62828;}
+  .tag-red:hover{background:#FFCDD2;}
+  .tag-blue{background:#E3F2FD;border-color:#90CAF9;color:#1565C0;}
+  .tag-blue:hover{background:#BBDEFB;}
+  .tag-empty{background:#F5F5F5;border-color:#DDD;color:#AAA;font-style:italic;}
+  .tag-empty:hover{background:var(--orange-pale);border-color:var(--orange-light);color:var(--orange-main);font-style:normal;}
+
+  /* EDITABLE CELL BUTTONS */
+  .edit-cell-btn{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px dashed #DDD;background:transparent;color:var(--text-dark);transition:all .15s;white-space:nowrap;}
+  .edit-cell-btn:hover{border-color:var(--orange-main);background:var(--orange-pale);color:var(--orange-deep);border-style:solid;}
+  .edit-cell-btn.cell-has-value{border-color:#9B6BD4;border-style:solid;background:#F3EEF9;color:#6A3DB8;}
+  .edit-cell-btn.cell-has-value:hover{background:#EDE7F6;}
+  .month-btn{padding:8px 4px;border-radius:8px;border:1.5px solid #E0D8D0;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text-mid);transition:all .15s;}
+  .month-btn:hover{background:var(--orange-main);color:#fff;border-color:var(--orange-main);}
+  .cell-input-wrap{}
+
+  /* COMBO STATUS BUTTON */
+  .combo-status-btn{padding:6px 12px;border-radius:20px;font-size:11.5px;font-weight:700;cursor:pointer;border:2px solid;transition:all .15s;white-space:nowrap;}
+  .combo-converted{background:#EDE7F6;border-color:#9B6BD4;color:#6A3DB8;}
+  .combo-converted:hover{background:#D7CCF0;}
+  .combo-pending{background:#FFF8E1;border-color:#FFC107;color:#B8860B;}
+  .combo-pending:hover{background:#FFF0C0;}
+  .combo-trial{background:#E3F2FD;border-color:#64B5F6;color:#1565C0;}
+  .combo-trial:hover{background:#BBDEFB;}
+  .combo-expired{background:#FFEBEE;border-color:#EF9A9A;color:#C62828;}
+  .combo-expired:hover{background:#FFCDD2;}
+  .combo-active{background:#E8F5E9;border-color:#81C784;color:#2E7D32;}
+  .combo-active:hover{background:#C8E6C9;}
+  .combo-loss{background:#F3E5F5;border-color:#CE93D8;color:#6A1B9A;}
+  .combo-loss:hover{background:#E1BEE7;}
+  .combo-empty{background:#F5F5F5;border-color:#DDD;color:#AAA;font-style:italic;}
+  .combo-empty:hover{background:var(--orange-pale);border-color:var(--orange-light);color:var(--orange-main);}
+
+  /* HANYU ACTION BUTTONS */
+  .hanyu-action-btn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+  .enroll-btn{background:#E8F5E9;color:#2E7D32;}
+  .enroll-btn:hover{background:#4CAF50;color:#fff;}
+  .loss-btn{background:#FFEBEE;color:#C62828;}
+  .loss-btn:hover{background:#EF5350;color:#fff;}
+
+  /* RESULT PICKER */
+  .result-options{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+  .result-option{padding:12px 16px;border-radius:10px;border:2px solid #EEE;cursor:pointer;font-size:13.5px;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:10px;}
+  .result-option:hover{border-color:var(--orange-light);background:var(--orange-pale);}
+  .result-option.rp-active{border-color:var(--orange-main);background:var(--orange-pale);color:var(--orange-deep);}
+  .result-option.opt-green:hover,.result-option.opt-green.rp-active{border-color:#4CAF50;background:#E8F5E9;color:#2E7D32;}
+  .result-option.opt-red:hover,.result-option.opt-red.rp-active{border-color:#EF5350;background:#FFEBEE;color:#C62828;}
+  .result-option.opt-blue:hover,.result-option.opt-blue.rp-active{border-color:#42A5F5;background:#E3F2FD;color:#1565C0;}
+
+  /* SUMMARY TABLE */
+  .summary-table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-top:16px;}
+  .summary-table-header{background:linear-gradient(135deg,var(--orange-card),var(--orange-main));padding:12px 18px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:14px;font-weight:700;}
+  .summary-table{width:100%;border-collapse:collapse;}
+  .summary-table thead th{background:var(--orange-pale);padding:11px 16px;text-align:center;font-size:12px;font-weight:700;color:var(--text-mid);border-bottom:2px solid #EDDDD0;}
+  .summary-table thead th:first-child{text-align:left;}
+  .summary-table tbody tr{border-bottom:1px solid #F5F0EB;transition:background .15s;}
+  .summary-table tbody tr:hover{background:var(--orange-pale);}
+  .summary-table tbody td{padding:12px 16px;font-size:13px;text-align:center;color:var(--text-dark);vertical-align:middle;}
+  .summary-table tbody td:first-child{text-align:left;font-weight:700;}
+  .summary-table tfoot td{padding:12px 16px;font-size:13px;font-weight:800;text-align:center;background:#FFF3E0;border-top:2px solid #EDDDD0;color:var(--orange-deep);}
+  .summary-table tfoot td:first-child{text-align:left;}
+  .age-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+  .age-5{background:#E3F2FD;color:#1565C0;}
+  .age-6{background:#E8F5E9;color:#2E7D32;}
+  .age-other{background:#F3E5F5;color:#6A1B9A;}
+  .pct-bar-wrap{display:flex;align-items:center;gap:8px;justify-content:center;}
+  .pct-bar{height:6px;background:#F0EDE8;border-radius:3px;width:60px;overflow:hidden;}
+  .pct-bar-fill{height:100%;background:var(--orange-main);border-radius:3px;transition:width .6s ease;}
+  .overlap-note{font-size:10px;color:var(--text-light);margin-top:2px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">🌟</div>
+    <h2>WeIP 5-6岁管理</h2>
+    <p>2026 · 数据同步 & 转正追踪</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">主要</div>
+    <button class="nav-item active" onclick="showPage('overview')"><span class="nav-icon">🏠</span>总览</button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">班级</div>
+    <button class="nav-item" onclick="showPage('vkids')"><span class="nav-icon">⭐</span>Vkids 转正班<span class="nav-badge" id="nav-vkids">0</span></button>
+    <button class="nav-item" onclick="showPage('hanyu')"><span class="nav-icon">📖</span>华语认字班<span class="nav-badge" id="nav-hanyu">0</span></button>
+    <button class="nav-item" onclick="showPage('booster')"><span class="nav-icon">⚡</span>Booster Class</button>
+    <button class="nav-item" onclick="showPage('prep')"><span class="nav-icon">🎒</span>1年级衔接</button>
+  </div>
+  <div class="teacher-section">
+    <div class="teacher-label">👩‍🏫 老师团队</div>
+    <div id="teacher-list-sidebar"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1 id="page-title">🏠 总目标总览</h1>
+      <p id="page-subtitle">2026年 · 实时同步 Google Sheet</p>
+    </div>
+    <div class="topbar-actions">
+      <div class="sync-indicator">
+        <span class="sync-dot"></span>
+        <span id="sync-status">未同步</span>
+      </div>
+      <button class="btn btn-outline" onclick="syncAll(false)">🔄 同步数据</button>
+      <button class="btn btn-primary" onclick="openAddModal()">＋ 添加学生</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== OVERVIEW ===== -->
+    <div class="page active" id="page-overview">
+      <div class="hero-banner">
+        <div class="hero-left">
+          <div class="year-tag">📅 2026年 大目标 <span style="font-size:10px;opacity:0.6;cursor:pointer" onclick="openTargetModal()">✏️ 修改目标</span></div>
+          <div class="big-num" id="ov-target">60</div>
+          <div class="sub-title">位学生 截至 12月 2026</div>
+          <div class="breakdown" id="ov-breakdown">Vkids 40位 + 华语认字班 20位</div>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat-card">
+            <div class="stat-num" id="ov-vkids">0</div>
+            <div class="stat-label">⭐ Vkids 学生</div>
+            <div class="stat-sublabel" id="ov-vkids-t">—</div>
+          </div>
+          <div class="hero-stat-card">
+            <div class="stat-num" id="ov-hanyu">0</div>
+            <div class="stat-label">📖 认字班学生</div>
+            <div class="stat-sublabel" id="ov-hanyu-t">—</div>
+          </div>
+          <div class="hero-stat-card">
+            <div class="stat-num" id="ov-total">0</div>
+            <div class="stat-label">👥 现有总数</div>
+            <div class="stat-sublabel" id="ov-gap">距目标 — 位</div>
+          </div>
+        </div>
+        <div class="progress-ring">
+          <svg width="108" height="108" viewBox="0 0 108 108">
+            <circle cx="54" cy="54" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="9"/>
+            <circle id="progress-arc" cx="54" cy="54" r="45" fill="none" stroke="#F5C842" stroke-width="9"
+              stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round" style="transition:stroke-dashoffset 1s ease"/>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-pct" id="ring-pct">0%</div>
+            <div class="ring-label">完成度</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alerts" id="alerts-container"></div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="sc-icon">👥</div><div class="sc-num" id="s-total">0</div><div class="sc-label">总学生（去重）</div></div>
+        <div class="stat-card"><div class="sc-icon">⭐</div><div class="sc-num" id="s-converted">0</div><div class="sc-label">Vkids 已转正</div><div class="sc-sub" id="s-pending">待转正 — 位</div></div>
+        <div class="stat-card"><div class="sc-icon">📖</div><div class="sc-num" id="s-enrolled">0</div><div class="sc-label">认字班已报</div><div class="sc-sub" id="s-trial">试课 — 位</div></div>
+        <div class="stat-card"><div class="sc-icon">🎉</div><div class="sc-num" id="s-thismonth">0</div><div class="sc-label">本月新增</div></div>
+      </div>
+
+      <div class="class-panels">
+        <div class="class-panel">
+          <div class="class-panel-header">
+            <div class="class-panel-icon vkids">⭐</div>
+            <div class="class-panel-title"><h3>Vkids 转正班</h3><p>目标 40位 · 珊/璇/蔡老师</p></div>
+            <div class="class-panel-num vkids" id="p-vkids">0</div>
+          </div>
+          <div class="mini-progress"><div class="mini-progress-fill vkids" id="bar-vkids" style="width:0%"></div></div>
+          <div class="teacher-tags" id="p-vkids-teachers"></div>
+        </div>
+        <div class="class-panel">
+          <div class="class-panel-header">
+            <div class="class-panel-icon hanyu">📖</div>
+            <div class="class-panel-title"><h3>华语认字班</h3><p>目标 20位 · Anna老师</p></div>
+            <div class="class-panel-num hanyu" id="p-hanyu">0</div>
+          </div>
+          <div class="mini-progress"><div class="mini-progress-fill hanyu" id="bar-hanyu" style="width:0%"></div></div>
+          <div class="teacher-tags" id="p-hanyu-teachers"></div>
+        </div>
+        <div class="class-panel">
+          <div class="class-panel-header">
+            <div class="class-panel-icon booster">⚡</div>
+            <div class="class-panel-title"><h3>Booster Class</h3><p>强化课程（即将开放）</p></div>
+            <div class="class-panel-num booster">—</div>
+          </div>
+          <div class="mini-progress"><div class="mini-progress-fill booster" style="width:0%"></div></div>
+          <div style="font-size:11.5px;color:var(--text-light)">数据即将接入</div>
+        </div>
+        <div class="class-panel">
+          <div class="class-panel-header">
+            <div class="class-panel-icon prep">🎒</div>
+            <div class="class-panel-title"><h3>1年级衔接</h3><p>升小学时间线追踪</p></div>
+            <div class="class-panel-num prep" id="p-prep">0</div>
+          </div>
+          <div class="mini-progress"><div class="mini-progress-fill prep" id="bar-prep" style="width:0%"></div></div>
+          <div style="font-size:11.5px;color:var(--text-light)" id="p-prep-sub">—</div>
+        </div>
+      </div>
+
+      <!-- 数据总结表 -->
+      <div class="summary-table-wrap">
+        <div class="summary-table-header">
+          <span>📊 年龄数据总结</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.7)">跨班去重统计</span>
+        </div>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>年龄</th>
+              <th>⭐ Vkids</th>
+              <th>📖 认字班（已报）</th>
+              <th>👥 合计（去重）</th>
+              <th>🎒 升1年级</th>
+              <th>升1年级占比</th>
+            </tr>
+          </thead>
+          <tbody id="summary-tbody"></tbody>
+          <tfoot id="summary-tfoot"></tfoot>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- ===== VKIDS PAGE ===== -->
+    <div class="page" id="page-vkids">
+      <div class="page-header">
+        <h2>⭐ Vkids 转正班</h2>
+        <div class="page-header-right">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('vkids')">⬇ 导出</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal('vkids')">＋ 添加</button>
+        </div>
+      </div>
+
+      <!-- Teacher filter tabs -->
+      <div class="teacher-tabs">
+        <button class="teacher-tab active" onclick="setVkidsTeacher('all',this)">全部老师</button>
+        <button class="teacher-tab" onclick="setVkidsTeacher('珊',this)">
+          <div class="tab-avatar" style="background:#E8601E">珊</div> 珊老师
+        </button>
+        <button class="teacher-tab" onclick="setVkidsTeacher('璇',this)">
+          <div class="tab-avatar" style="background:#9B6BD4">璇</div> 璇老师
+        </button>
+        <button class="teacher-tab" onclick="setVkidsTeacher('蔡',this)">
+          <div class="tab-avatar" style="background:#C94B1A">蔡</div> 蔡老师
+        </button>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-chip active" onclick="setVkidsStatus('all',this)">全部</button>
+        <button class="filter-chip" onclick="setVkidsStatus('converted',this)">已转正</button>
+        <button class="filter-chip" onclick="setVkidsStatus('pending',this)">待转正</button>
+        <button class="filter-chip" onclick="setVkidsStatus('trial',this)">试课中</button>
+        <button class="filter-chip" onclick="setVkidsStatus('expired',this)">Package到期</button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-meta">
+          <span id="vkids-count">共 0 位学生</span>
+          <span style="color:var(--orange-main);font-weight:600">目标 40位</span>
+        </div>
+        <table class="student-table">
+          <thead><tr>
+            <th>学生姓名</th><th>年龄</th><th>班主任</th>
+            <th>报名月份</th><th>转正月份</th><th>是否上1年级</th>
+            <th>状态／结果</th><th>备注</th>
+          </tr></thead>
+          <tbody id="vkids-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== HANYU PAGE ===== -->
+    <div class="page" id="page-hanyu">
+      <div class="page-header">
+        <h2>📖 华语认字班</h2>
+        <div class="page-header-right">
+          <button class="btn btn-outline btn-sm" onclick="exportCSV('hanyu')">⬇ 导出</button>
+        </div>
+      </div>
+
+      <div class="hanyu-grid">
+        <!-- Trial students -->
+        <div class="hanyu-panel">
+          <div class="hanyu-panel-header">
+            <h3>🔵 试课学生</h3>
+            <span class="hanyu-count-badge trial" id="hanyu-trial-count">0 位</span>
+          </div>
+          <table class="student-table">
+            <thead><tr>
+              <th>编号</th><th>学生姓名</th><th>年龄</th>
+              <th>试课月份</th><th>Consultant</th><th>来源</th><th>备注</th><th>操作</th>
+            </tr></thead>
+            <tbody id="hanyu-trial-tbody"></tbody>
+          </table>
+        </div>
+        <!-- Enrolled students -->
+        <div class="hanyu-panel">
+          <div class="hanyu-panel-header">
+            <h3>✅ 已报学生</h3>
+            <span class="hanyu-count-badge" id="hanyu-enrolled-count">0 位</span>
+          </div>
+          <table class="student-table">
+            <thead><tr>
+              <th>编号</th><th>学生姓名</th><th>年龄</th>
+              <th>报名月份</th><th>升1年级</th><th>来源</th><th>备注</th><th>操作</th>
+            </tr></thead>
+            <tbody id="hanyu-enrolled-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BOOSTER PAGE ===== -->
+    <div class="page" id="page-booster">
+      <div class="coming-soon">
+        <div class="cs-icon">⚡</div>
+        <h3>Booster Class</h3>
+        <p>此模块正在准备中，数据即将接入</p>
+        <p style="margin-top:8px;font-size:12px">请联系负责人设置 Google Sheet 数据源</p>
+      </div>
+    </div>
+
+    <!-- ===== PREP TIMELINE PAGE ===== -->
+    <div class="page" id="page-prep">
+      <div class="page-header">
+        <h2>🎒 1年级衔接时间线</h2>
+        <div class="page-header-right">
+          <button class="btn btn-outline btn-sm" onclick="openAddEventModal()">＋ 添加事项</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+        <div class="stat-card"><div class="sc-icon">🎒</div><div class="sc-num" id="prep-total">0</div><div class="sc-label">即将升小学</div></div>
+        <div class="stat-card"><div class="sc-icon">✅</div><div class="sc-num" id="prep-ready">0</div><div class="sc-label">已转正/在读</div></div>
+        <div class="stat-card"><div class="sc-icon">⏳</div><div class="sc-num" id="prep-pending">0</div><div class="sc-label">待跟进</div></div>
+      </div>
+
+      <!-- Month selector -->
+      <div class="cal-month-nav">
+        <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+        <div class="cal-month-tabs" id="cal-month-tabs"></div>
+        <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+      </div>
+
+      <!-- Calendar + Timeline split -->
+      <div class="cal-tl-layout">
+        <!-- LEFT: Calendar -->
+        <div class="cal-panel">
+          <div class="cal-header">
+            <div class="cal-month-title" id="cal-month-title">2026年 6月</div>
+            <div class="cal-goal" id="cal-goal">目标：—</div>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-day-label">日</div><div class="cal-day-label">一</div>
+            <div class="cal-day-label">二</div><div class="cal-day-label">三</div>
+            <div class="cal-day-label">四</div><div class="cal-day-label">五</div>
+            <div class="cal-day-label">六</div>
+            <div id="cal-days"></div>
+          </div>
+          <!-- Month notes -->
+          <div class="cal-notes-section">
+            <div class="cal-notes-title">📋 本月重点</div>
+            <div id="cal-notes-content" class="cal-notes-content"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Timeline -->
+        <div class="tl-panel">
+          <div class="tl-panel-header">
+            <div style="font-size:14px;font-weight:700">📅 行动时间线</div>
+            <span id="tl-month-label" style="font-size:12px;color:var(--text-light)"></span>
+          </div>
+          <div id="tl-events" class="tl-events-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ADD EVENT MODAL -->
+<div class="modal-overlay" id="add-event-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3 id="add-event-title">＋ 添加事项</h3>
+      <button class="modal-close" onclick="closeModal('add-event-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>月份</label>
+          <select id="ev-month">
+            <option value="6">6月</option><option value="7">7月</option>
+            <option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option>
+            <option value="12">12月</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>周次</label>
+          <select id="ev-week">
+            <option value="1">第1周</option><option value="2">第2周</option>
+            <option value="3">第3周</option><option value="4">第4周</option>
+            <option value="5">第5周</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>事项内容 *</label>
+        <input type="text" id="ev-title" placeholder="例：cb/面谈 转正vkids">
+      </div>
+      <div class="form-group">
+        <label>类型</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="checkbox-item" id="ev-type-cb" onclick="selectEvType('cb')"><input type="radio" name="ev-type" value="cb"> 📞 CB/面谈</label>
+          <label class="checkbox-item" id="ev-type-pull" onclick="selectEvType('pull')"><input type="radio" name="ev-type" value="pull"> 🎯 拉生</label>
+          <label class="checkbox-item" id="ev-type-meeting" onclick="selectEvType('meeting')"><input type="radio" name="ev-type" value="meeting"> 👥 会议</label>
+          <label class="checkbox-item" id="ev-type-note" onclick="selectEvType('note')"><input type="radio" name="ev-type" value="note"> 📋 重点</label>
+          <label class="checkbox-item" id="ev-type-custom" onclick="selectEvType('custom')"><input type="radio" name="ev-type" value="custom"> ✏️ 其他</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-event-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEvent()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONVERT MODAL -->
+<div class="modal-overlay" id="convert-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⭐ 确认转正</h3>
+      <button class="modal-close" onclick="closeModal('convert-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="convert-info">
+        <div class="ci-name" id="cm-name">—</div>
+        <div class="ci-meta" id="cm-meta">—</div>
+      </div>
+      <div class="form-group">
+        <label>转正月份 *</label>
+        <select id="cm-month">
+          <option value="">选择月份</option>
+          <option>1月</option><option>2月</option><option>3月</option><option>4月</option>
+          <option>5月</option><option>6月</option><option>7月</option><option>8月</option>
+          <option>9月</option><option>10月</option><option>11月</option><option>12月</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>跟进结果备注</label>
+        <input type="text" id="cm-result" placeholder="例：已确认续读、家长已同意...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('convert-modal')">取消</button>
+      <button class="btn btn-primary" id="cm-save-btn" onclick="saveConvert()">✅ 确认转正</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="add-modal-title">➕ 添加学生</h3>
+      <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>学生姓名 *</label>
+          <input type="text" id="f-name" placeholder="请输入全名">
+        </div>
+        <div class="form-group">
+          <label>年龄</label>
+          <select id="f-age">
+            <option value="">选择</option>
+            <option>4岁</option><option>5岁</option><option>6岁</option><option>7岁</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>班主任</label>
+          <select id="f-teacher">
+            <option value="">选择老师</option>
+            <option value="珊">珊老师</option>
+            <option value="璇">璇老师</option>
+            <option value="蔡">蔡老师</option>
+            <option value="Anna">Anna老师</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>报名月份</label>
+          <select id="f-month">
+            <option value="">选择月份</option>
+            <option>1月</option><option>2月</option><option>3月</option><option>4月</option>
+            <option>5月</option><option>6月</option><option>7月</option><option>8月</option>
+            <option>9月</option><option>10月</option><option>11月</option><option>12月</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>家长联系</label>
+          <input type="text" id="f-phone" placeholder="电话号码">
+        </div>
+        <div class="form-group">
+          <label>是否上1年级</label>
+          <select id="f-y1">
+            <option value="">—</option>
+            <option value="V">✅ 是 (2027)</option>
+            <option value="N">❌ 否</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <input type="text" id="f-notes" placeholder="特别事项...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-modal')">取消</button>
+      <button class="btn btn-primary" id="add-save-btn" onclick="saveNewStudent()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- EXPIRED ALERT MODAL -->
+<div class="modal-overlay" id="expired-alert-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#C62828,#EF5350);border-radius:14px 14px 0 0">
+      <h3 style="color:#fff">🔴 Package 到期提醒</h3>
+      <button class="modal-close" style="color:rgba(255,255,255,0.8)" onclick="closeModal('expired-alert-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:10px 0 18px">
+        <div style="font-size:40px;margin-bottom:10px">📞</div>
+        <div style="font-size:18px;font-weight:800;color:var(--orange-deep)" id="ea-name">—</div>
+        <div style="font-size:12.5px;color:var(--text-light);margin-top:4px">的 Package 已到期</div>
+      </div>
+      <div style="background:#FFF3E0;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div class="info-row">🧑‍🏫 <strong>负责老师</strong> <span id="ea-teacher">—</span></div>
+        <div class="info-row">📞 <strong>家长联系</strong> <span id="ea-phone">—</span></div>
+        <div class="info-row">📅 <strong>报名月份</strong> <span id="ea-enroll">—</span></div>
+      </div>
+      <div style="background:#FFEBEE;border-radius:10px;padding:12px 16px;font-size:13px;color:#C62828;font-weight:600;line-height:1.6">
+        ⚠️ 请负责老师安排面谈，了解家长续读意向，及时跟进转正！
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('expired-alert-modal')">稍后处理</button>
+      <button class="btn btn-primary" style="background:#C62828" onclick="closeModal('expired-alert-modal');showToast('📌 已记录，请尽快安排面谈','')">📌 已记录</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTES EDIT MODAL -->
+<div class="modal-overlay" id="notes-modal">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <h3>📝 编辑备注</h3>
+      <button class="modal-close" onclick="closeModal('notes-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:12px">学生：<strong id="notes-student-name" style="color:var(--text-dark)">—</strong></div>
+      <div class="form-group">
+        <label>备注内容</label>
+        <textarea id="notes-input" rows="4" placeholder="输入备注，例如：家长联系方式、孩子特别事项、跟进记录..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="saveNotes('')">🗑 清除</button>
+      <button class="btn btn-outline" onclick="closeModal('notes-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveNotes(document.getElementById('notes-input').value)">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- CELL EDIT MODAL -->
+<div class="modal-overlay" id="cell-modal">
+  <div class="modal" style="width:320px">
+    <div class="modal-header">
+      <h3 id="cell-modal-title">✏️ 编辑</h3>
+      <button class="modal-close" onclick="closeModal('cell-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px 22px">
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:12px">学生：<strong id="cell-student-name" style="color:var(--text-dark)">—</strong></div>
+
+      <!-- Select: age -->
+      <div id="cell-input-select-age" class="cell-input-wrap" style="display:none">
+        <div class="result-options">
+          <div class="result-option" onclick="saveCellEdit('5岁')">5岁</div>
+          <div class="result-option" onclick="saveCellEdit('6岁')">6岁</div>
+          <div class="result-option" onclick="saveCellEdit('7岁')">7岁</div>
+        </div>
+      </div>
+
+      <!-- Select: teacher -->
+      <div id="cell-input-select-teacher" class="cell-input-wrap" style="display:none">
+        <div class="result-options">
+          <div class="result-option" onclick="saveCellEdit('珊')"><div style="width:24px;height:24px;border-radius:50%;background:#E8601E;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;margin-right:8px">珊</div>珊老师</div>
+          <div class="result-option" onclick="saveCellEdit('璇')"><div style="width:24px;height:24px;border-radius:50%;background:#9B6BD4;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;margin-right:8px">璇</div>璇老师</div>
+          <div class="result-option" onclick="saveCellEdit('蔡')"><div style="width:24px;height:24px;border-radius:50%;background:#C94B1A;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;margin-right:8px">蔡</div>蔡老师</div>
+          <div class="result-option" onclick="saveCellEdit('Anna')"><div style="width:24px;height:24px;border-radius:50%;background:#2BB5A0;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;margin-right:8px">A</div>Anna老师</div>
+        </div>
+      </div>
+
+      <!-- Select: month -->
+      <div id="cell-input-select-month" class="cell-input-wrap" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button class="month-btn" onclick="saveCellEdit('1月')">1月</button>
+          <button class="month-btn" onclick="saveCellEdit('2月')">2月</button>
+          <button class="month-btn" onclick="saveCellEdit('3月')">3月</button>
+          <button class="month-btn" onclick="saveCellEdit('4月')">4月</button>
+          <button class="month-btn" onclick="saveCellEdit('5月')">5月</button>
+          <button class="month-btn" onclick="saveCellEdit('6月')">6月</button>
+          <button class="month-btn" onclick="saveCellEdit('7月')">7月</button>
+          <button class="month-btn" onclick="saveCellEdit('8月')">8月</button>
+          <button class="month-btn" onclick="saveCellEdit('9月')">9月</button>
+          <button class="month-btn" onclick="saveCellEdit('10月')">10月</button>
+          <button class="month-btn" onclick="saveCellEdit('11月')">11月</button>
+          <button class="month-btn" onclick="saveCellEdit('12月')">12月</button>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="saveCellEdit('')">🗑 清除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT PICKER MODAL -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal" style="width:360px">
+    <div class="modal-header">
+      <h3>📋 跟进结果</h3>
+      <button class="modal-close" onclick="closeModal('result-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:var(--text-light);margin-bottom:14px">学生：<strong id="rp-name" style="color:var(--text-dark)">—</strong></div>
+      <div class="result-options">
+        <div class="result-option opt-green" id="rp-converted" onclick="pickResult('converted')">
+          ⭐ 已转正 <span style="font-size:11px;font-weight:400;margin-left:auto;color:var(--text-light)">正式报名转正</span>
+        </div>
+        <div class="result-option" id="rp-pending" onclick="pickResult('pending')">
+          🟡 待转正 <span style="font-size:11px;font-weight:400;margin-left:auto;color:var(--text-light)">跟进中待确认</span>
+        </div>
+        <div class="result-option opt-red" id="rp-expired" onclick="pickResult('expired')">
+          🔴 到期 <span style="font-size:11px;font-weight:400;margin-left:auto;color:var(--text-light)">Package到期，需面谈转正</span>
+        </div>
+        <div class="result-option opt-red" id="rp-loss" onclick="pickResult('loss')">
+          ❌ 流失 <span style="font-size:11px;font-weight:400;margin-left:auto;color:var(--text-light)">已离开／不续读</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('result-modal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- TARGET EDIT MODAL -->
+<div class="modal-overlay" id="target-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3>✏️ 修改大目标</h3>
+      <button class="modal-close" onclick="closeModal('target-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:var(--text-light);margin-bottom:18px">修改后会立即更新总览页的进度显示</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>⭐ Vkids 目标人数</label>
+          <input type="number" id="t-vkids" min="1" max="200" placeholder="40">
+        </div>
+        <div class="form-group">
+          <label>📖 华语认字班目标人数</label>
+          <input type="number" id="t-hanyu" min="1" max="200" placeholder="20">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>⚡ Booster Class 目标人数（选填）</label>
+        <input type="number" id="t-booster" min="0" max="200" placeholder="0">
+      </div>
+      <div style="background:var(--orange-pale);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--text-mid)">
+        总目标 = <strong id="t-preview">60</strong> 位
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('target-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveTarget()">✅ 保存目标</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — 填入你的 Google Apps Script Web App URL
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby2ptEsxuv8gxld4epCELrFyXutJd5p643LSriiTYf7SWg7yzc6LvD_tAEoDijqWlRp/exec';
+
+// ============================================================
+// STATE
+// ============================================================
+var vkidsStudents  = [];   // from VKIDS 5岁2025 + 稳生合并
+var hanyuTrial     = [];   // from 华语认字班 试课
+var hanyuEnrolled  = [];   // from 华语认字班 已报
+var currentVkidsTeacher = 'all';
+var currentVkidsStatus  = 'all';
+var convertTarget = null;  // student being converted
+
+var TEACHERS = {
+  '珊': { color:'#E8601E', initial:'珊' },
+  'Sharon': { color:'#E8601E', initial:'珊' },
+  '璇': { color:'#9B6BD4', initial:'璇' },
+  '蔡': { color:'#C94B1A', initial:'蔡' },
+  'Anna': { color:'#2BB5A0', initial:'A' },
+  'jessie': { color:'#2BB5A0', initial:'J' },
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  renderPrepTimeline();
+  if (GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    startAutoSync();
+  } else {
+    loadDemoData();
+  }
+});
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+function loadDemoData() {
+  vkidsStudents = [
+    { name:'李韵恩',      age:'6岁', teacher:'珊', enrollMonth:'9月', convertMonth:'报名', y1:'V', payment:'paid✅', result:'',     status:'converted', phone:'0165210510' },
+    { name:'梁志坚',      age:'6岁', teacher:'珊', enrollMonth:'9月', convertMonth:'',     y1:'',  payment:'paid✅', result:'',     status:'pending',   phone:'0162337465' },
+    { name:'Yee Han Ming',age:'5岁', teacher:'璇', enrollMonth:'9月', convertMonth:'',     y1:'',  payment:'paid✅', result:'',     status:'pending',   phone:'0123008066' },
+    { name:'BELLE CHIN',  age:'5岁', teacher:'蔡', enrollMonth:'9月', convertMonth:'',     y1:'',  payment:'paid✅', result:'',     status:'expired',   phone:'0175556300' },
+    { name:'陈冠企',      age:'6岁', teacher:'珊', enrollMonth:'1月', convertMonth:'',     y1:'V', payment:'paid✅', result:'',     status:'expired',   phone:'012-345' },
+  ];
+  hanyuTrial = [
+    { no:1, name:'任凯名', age:'5岁', trialMonth:'加科？', consultant:'jessie', source:'ws',       notes:'no y1' },
+    { no:2, name:'黄美华', age:'6岁', trialMonth:'6月',    consultant:'Anna',   source:'referral', notes:'' },
+    { no:3, name:'林志强', age:'5岁', trialMonth:'6月',    consultant:'Anna',   source:'ig',       notes:'待跟进' },
+  ];
+  hanyuEnrolled = [
+    { no:1, name:'王梓萱', age:'6岁', enrollMonth:'6月', source:'',         notes:'' },
+    { no:2, name:'郑晓雯', age:'5岁', enrollMonth:'5月', source:'referral', notes:'' },
+    { no:3, name:'吴俊杰', age:'6岁', enrollMonth:'4月', source:'ws',       notes:'' },
+  ];
+  renderAll();
+  showToast('演示模式 · 请设置 GAS_URL 连接 Google Sheet', '');
+}
+
+// ============================================================
+// SYNC FROM GOOGLE SHEET
+// ============================================================
+var AUTO_SYNC_MINUTES = 0; // 关闭自动同步
+var syncCountdown = 0;
+var countdownTimer = null;
+var isSyncing = false;
+
+// Send data via GET to avoid CORS (GAS doesn't support CORS for POST from external)
+function gasWrite(payload) {
+  if(GAS_URL === 'YOUR_GAS_URL_HERE') return Promise.resolve({success:true});
+  return new Promise(function(resolve) {
+    // 用 JSONP 方式绕过 CORS 限制
+    var callbackName = 'cb_' + Date.now();
+    var params = Object.keys(payload).map(function(k){
+      return encodeURIComponent(k) + '=' + encodeURIComponent(JSON.stringify(payload[k]));
+    }).join('&');
+    params += '&callback=' + callbackName;
+
+    window[callbackName] = function(data) {
+      resolve(data);
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    var script = document.createElement('script');
+    script.src = GAS_URL + '?' + params;
+    script.onerror = function() {
+      resolve({success:false});
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+    document.body.appendChild(script);
+
+    // 5秒超时
+    setTimeout(function() {
+      if(window[callbackName]) {
+        resolve({success:true}); // 假设成功
+        delete window[callbackName];
+        try { document.body.removeChild(script); } catch(e){}
+      }
+    }, 5000);
+  });
+}
+
+function syncAll(silent) {
+  if(isSyncing) return;
+  if(GAS_URL === 'YOUR_GAS_URL_HERE') {
+    showToast('⚠️ 演示模式，请先设置 GAS_URL', '');
+    return;
+  }
+  isSyncing = true;
+  setSyncStatus('同步中...', '#F5C842');
+  fetch(GAS_URL + '?action=getAll')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      vkidsStudents = data.vkids || [];
+      hanyuTrial    = data.hanyuTrial || [];
+      hanyuEnrolled = data.hanyuEnrolled || [];
+      // 恢复 hanyu 升1年级标记（localStorage 优先）
+      var hanyuY1 = JSON.parse(localStorage.getItem('weip_hanyu_y1')||'{}');
+      hanyuEnrolled.forEach(function(s){ if(hanyuY1[s.name]) s.y1 = hanyuY1[s.name]; });
+      renderAll();
+      setSyncStatus('已同步 ' + timeNow(), '#2BB5A0');
+      resetCountdown();
+      if(!silent) showToast('✅ 数据同步成功', 'success');
+    })
+    .catch(function() {
+      setSyncStatus('同步失败 · 点击重试', '#C62828');
+      if(!silent) showToast('同步失败，请检查网络', 'error');
+    })
+    .finally ? (function(){isSyncing=false;}) : (isSyncing=false);
+  // fallback for older browsers
+  setTimeout(function(){ isSyncing=false; }, 10000);
+}
+
+function setSyncStatus(text, color) {
+  document.getElementById('sync-status').textContent = text;
+  document.querySelector('.sync-dot').style.background = color;
+}
+
+function startAutoSync() {
+  if(GAS_URL === 'YOUR_GAS_URL_HERE') return;
+  // 只在打开页面时同步一次
+  syncAll(true);
+}
+
+function resetCountdown() {
+  // 关闭自动同步，不做任何事
+  var el = document.getElementById('sync-countdown');
+  if(el) el.textContent = '';
+}
+
+function changeSyncInterval(mins) {
+  // 已关闭自动同步
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  renderSidebar();
+  renderOverview();
+  renderVkids();
+  renderHanyu();
+  renderPrepStats();
+  updateNavBadges();
+}
+
+function renderSidebar() {
+  var teachers = ['珊','璇','蔡','Anna'];
+  var colors   = ['#E8601E','#9B6BD4','#C94B1A','#2BB5A0'];
+  var counts   = [
+    vkidsStudents.filter(function(s){return s.teacher==='珊'||s.teacher==='Sharon';}).length,
+    vkidsStudents.filter(function(s){return s.teacher==='璇';}).length,
+    vkidsStudents.filter(function(s){return s.teacher==='蔡';}).length,
+    hanyuEnrolled.length,
+  ];
+  var html = '';
+  for (var i=0;i<teachers.length;i++) {
+    html += '<div class="teacher-item"><div class="teacher-avatar" style="background:'+colors[i]+'">'+(teachers[i]==='Anna'?'A':teachers[i])+'</div><span class="teacher-name">'+teachers[i]+'老师</span><span class="teacher-count">'+counts[i]+'</span></div>';
+  }
+  document.getElementById('teacher-list-sidebar').innerHTML = html;
+}
+
+function renderOverview() {
+  var vTotal    = vkidsStudents.length;
+  var hEnrolled = hanyuEnrolled.length;
+  var hTrial    = hanyuTrial.length;
+  var total     = vTotal + hEnrolled;
+  var target    = TARGETS.vkids + TARGETS.hanyu + TARGETS.booster;
+  var pct       = Math.round(total / target * 100);
+
+  setText('ov-target', target);
+  setText('ov-breakdown', 'Vkids '+TARGETS.vkids+'位 + 华语认字班 '+TARGETS.hanyu+'位'+(TARGETS.booster?' + Booster '+TARGETS.booster+'位':''));
+  setText('ov-vkids', vTotal);
+  setText('ov-hanyu', hEnrolled);
+  setText('ov-total', total);
+  setText('ov-gap', '距目标 '+Math.max(0, target-total)+' 位');
+  setText('ov-vkids-t', '珊·璇·蔡老师');
+  setText('ov-hanyu-t', 'Anna老师');
+  setText('ring-pct', pct+'%');
+  var arc = document.getElementById('progress-arc');
+  if(arc) arc.style.strokeDashoffset = 283 - (283 * Math.min(100,pct) / 100);
+
+  var converted = vkidsStudents.filter(function(s){return s.status==='converted';}).length;
+  var pending   = vkidsStudents.filter(function(s){return s.status==='pending';}).length;
+  setText('s-total', total);
+  setText('s-converted', converted);
+  setText('s-pending', '待转正 '+pending+' 位');
+  setText('s-enrolled', hEnrolled);
+  setText('s-trial', '试课 '+hTrial+' 位');
+  setText('s-thismonth', countThisMonth());
+
+  setText('p-vkids', vTotal);
+  setText('p-hanyu', hEnrolled);
+  setWidth('bar-vkids', vTotal / TARGETS.vkids * 100);
+  setWidth('bar-hanyu', hEnrolled / TARGETS.hanyu * 100);
+
+  var y1count = vkidsStudents.filter(function(s){return s.y1==='V';}).length;
+  setText('p-prep', y1count);
+  setWidth('bar-prep', y1count/vTotal*100||0);
+  setText('p-prep-sub', '2027年升小学 '+y1count+' 位');
+
+  // Teacher tags
+  document.getElementById('p-vkids-teachers').innerHTML =
+    ['珊','璇','蔡'].map(function(t){return '<span class="teacher-tag orange">'+t+'老师</span>';}).join('');
+  document.getElementById('p-hanyu-teachers').innerHTML =
+    '<span class="teacher-tag teal">Anna老师</span>';
+
+  // Alerts
+  var alerts = [];
+  var expired = vkidsStudents.filter(function(s){return s.status==='expired';});
+  if(expired.length) alerts.push({type:'warn',icon:'🎒',text:expired.length+' 位 Vkids 学生 Package 已逾期！'+expired.map(function(s){return s.name;}).join('、')});
+  var trials = vkidsStudents.filter(function(s){return s.status==='trial';});
+  if(trials.length) alerts.push({type:'info',icon:'⏰',text:trials.length+' 位需面谈：'+trials.map(function(s){return s.name;}).join('、')});
+  if(hTrial>0) alerts.push({type:'blue',icon:'📖',text:'华语认字班 '+hTrial+' 位试课学生待跟进，目标达成还差 '+(20-hEnrolled)+' 位！'});
+  document.getElementById('alerts-container').innerHTML = alerts.map(function(a){
+    return '<div class="alert-item '+a.type+'"><span class="alert-icon">'+a.icon+'</span>'+a.text+'</div>';
+  }).join('');
+
+  renderSummaryTable();
+}
+
+function renderVkids() {
+  var list = vkidsStudents.filter(function(s) {
+    var teacherMatch = currentVkidsTeacher === 'all' || s.teacher === currentVkidsTeacher || (currentVkidsTeacher==='珊' && s.teacher==='Sharon');
+    var statusMatch  = currentVkidsStatus  === 'all' || s.status === currentVkidsStatus;
+    return teacherMatch && statusMatch;
+  });
+  setText('vkids-count', '共 '+list.length+' 位学生');
+  var tbody = document.getElementById('vkids-tbody');
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><h3>暂无学生数据</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(s) {
+    var tc = TEACHERS[s.teacher] || {color:'#999',initial:'?'};
+    var sn = s.name.replace(/'/g,"\\'");
+
+    // 年龄 — 点击编辑
+    var ageBtn = '<button class="edit-cell-btn" onclick="openCellEdit(\''+sn+'\',\'age\',\''+( s.age||'')+'\',\'select-age\')">'+(s.age||'＋')+'</button>';
+
+    // 班主任 — 点击选择
+    var teacherBtn = '<div style="display:flex;align-items:center;gap:5px">'+
+      '<div style="width:22px;height:22px;border-radius:50%;background:'+tc.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">'+tc.initial+'</div>'+
+      '<button class="edit-cell-btn" onclick="openCellEdit(\''+sn+'\',\'teacher\',\''+(s.teacher||'')+'\',\'select-teacher\')">'+(s.teacher||'＋')+'</button>'+
+    '</div>';
+
+    // 报名月份 — 点击编辑
+    var enrollBtn = '<button class="edit-cell-btn" onclick="openCellEdit(\''+sn+'\',\'enrollMonth\',\''+(s.enrollMonth||'')+'\',\'select-month\')">'+(s.enrollMonth||'＋')+'</button>';
+
+    // 转正月份 — 点击编辑
+    var convertMonthBtn = '<button class="edit-cell-btn '+(s.convertMonth?'cell-has-value':'')+'" onclick="openCellEdit(\''+sn+'\',\'convertMonth\',\''+(s.convertMonth||'')+'\',\'select-month\')">'+(s.convertMonth||'＋')+'</button>';
+
+    // 是否上1年级 — 点击切换
+    var y1btn = '<button class="inline-toggle '+(s.y1==='V'?'toggle-yes':'toggle-no')+'" onclick="toggleY1(\''+sn+'\')">'+(s.y1==='V'?'✅ 是':'❌ 否')+'</button>';
+
+    // 跟进结果+状态 合并 — 点击弹出选项
+    // 新 Sheet 状态直接用中文
+    var comboMap = {
+      '已转正': { label:'⭐ 已转正', cls:'combo-converted' },
+      '待转正': { label:'🟡 待转正', cls:'combo-pending'   },
+      '到期':   { label:'🔴 到期',   cls:'combo-expired'   },
+      '流失':   { label:'❌ 流失',   cls:'combo-loss'      },
+      // 兼容旧格式
+      'converted': { label:'⭐ 已转正', cls:'combo-converted' },
+      'pending':   { label:'🟡 待转正', cls:'combo-pending'   },
+      'expired':   { label:'🔴 到期',   cls:'combo-expired'   },
+      'loss':      { label:'❌ 流失',   cls:'combo-loss'      },
+    };
+    var combo = comboMap[s.status] || { label:'＋ 选择', cls:'combo-empty' };
+    var comboBtn = '<button class="combo-status-btn '+combo.cls+'" onclick="openResultPicker(\''+sn+'\')">'+combo.label+'</button>';
+
+    // 备注按钮
+    var notesBtn = '<button class="table-action edit" onclick="openNotesEdit(\''+sn+'\')">'+(s.notes?'📝 '+s.notes.substring(0,8)+(s.notes.length>8?'…':''):'＋ 备注')+'</button>';
+
+    return '<tr>'+
+      '<td><strong>'+s.name+'</strong></td>'+
+      '<td>'+ageBtn+'</td>'+
+      '<td>'+teacherBtn+'</td>'+
+      '<td>'+enrollBtn+'</td>'+
+      '<td>'+convertMonthBtn+'</td>'+
+      '<td>'+y1btn+'</td>'+
+      '<td>'+comboBtn+'</td>'+
+      '<td>'+notesBtn+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ============================================================
+// INLINE ACTIONS
+// ============================================================
+
+// ============================================================
+// NOTES EDIT
+// ============================================================
+var notesTarget = null;
+function openNotesEdit(name) {
+  notesTarget = name;
+  var s = vkidsStudents.find(function(x){ return x.name===name; });
+  document.getElementById('notes-student-name').textContent = name;
+  document.getElementById('notes-input').value = s ? (s.notes||'') : '';
+  document.getElementById('notes-modal').classList.add('open');
+}
+
+function saveNotes(val) {
+  var s = vkidsStudents.find(function(x){ return x.name===notesTarget; });
+  if(!s) return;
+  s.notes = val.trim();
+  s.updatedAt = new Date().toISOString();
+  closeModal('notes-modal');
+  renderVkids();
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'updateField', name:s.name, teacher:s.teacher, field:'notes', value:s.notes, updatedAt:s.updatedAt });
+  }
+  showToast(val ? '📝 备注已保存' : '🗑 备注已清除', 'success');
+}
+
+// ============================================================
+// CELL EDIT (age, teacher, enrollMonth, convertMonth)
+// ============================================================
+var cellEditTarget = { name:'', field:'', inputType:'' };
+var CELL_TITLES = { age:'编辑年龄', teacher:'选择班主任', enrollMonth:'报名月份', convertMonth:'转正月份' };
+
+function openCellEdit(name, field, currentVal, inputType) {
+  cellEditTarget = { name:name, field:field, inputType:inputType };
+  document.getElementById('cell-modal-title').textContent = '✏️ ' + (CELL_TITLES[field]||field);
+  document.getElementById('cell-student-name').textContent = name;
+  // Hide all input types
+  document.querySelectorAll('.cell-input-wrap').forEach(function(el){ el.style.display='none'; });
+  // Show the right one
+  var wrap = document.getElementById('cell-input-'+inputType);
+  if(wrap) wrap.style.display='block';
+  // Highlight current value for month picker
+  if(inputType==='select-month') {
+    document.querySelectorAll('.month-btn').forEach(function(btn){
+      btn.style.background = btn.textContent===currentVal ? 'var(--orange-main)' : '';
+      btn.style.color      = btn.textContent===currentVal ? '#fff' : '';
+      btn.style.borderColor= btn.textContent===currentVal ? 'var(--orange-main)' : '';
+    });
+  }
+  // Highlight current for options
+  if(inputType==='select-age'||inputType==='select-teacher') {
+    document.querySelectorAll('#cell-input-'+inputType+' .result-option').forEach(function(opt){
+      var match = opt.textContent.trim().startsWith(currentVal);
+      opt.classList.toggle('rp-active', match);
+    });
+  }
+  document.getElementById('cell-modal').classList.add('open');
+}
+
+function saveCellEdit(val) {
+  // 如果是 hanyu 月份编辑，转交给 hanyu handler
+  if(hanyuCellTarget.field && (hanyuCellTarget.field==='trialMonth'||hanyuCellTarget.field==='enrollMonth')) {
+    saveHanyuCellEdit(val);
+    return;
+  }
+  var s = vkidsStudents.find(function(x){ return x.name===cellEditTarget.name; });
+  if(!s) return;
+  s[cellEditTarget.field] = val;
+  s.updatedAt = new Date().toISOString();
+  closeModal('cell-modal');
+  renderVkids();
+  renderOverview();
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'updateField', name:s.name, teacher:s.teacher, field:cellEditTarget.field, value:val, updatedAt:s.updatedAt });
+  }
+  showToast('✅ 已更新', 'success');
+}
+
+// Toggle Y1 for Hanyu enrolled
+function toggleHanyuY1(idx) {
+  var s = hanyuEnrolled[idx];
+  if(!s) return;
+  s.y1 = s.y1==='V' ? 'N' : 'V';
+  // 存到 localStorage
+  var key = 'weip_hanyu_y1';
+  var stored = JSON.parse(localStorage.getItem(key)||'{}');
+  stored[s.name] = s.y1;
+  localStorage.setItem(key, JSON.stringify(stored));
+  renderHanyu();
+  renderSummaryTable();
+  showToast((s.y1==='V'?'✅ 已标记升1年级':'❌ 取消升1年级')+' · '+s.name, 'success');
+}
+
+// Toggle Y1 for Vkids
+function toggleY1(name) {
+  var s = vkidsStudents.find(function(x){ return x.name===name; });
+  if(!s) return;
+  s.y1 = s.y1==='V' ? 'N' : 'V';
+  renderVkids();
+  renderOverview();
+  // Save to GAS
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'updateField', name:name, teacher:s.teacher, field:'y1', value:s.y1 });
+  }
+  showToast((s.y1==='V'?'✅ 标记为升1年级':'❌ 取消升1年级'), 'success');
+}
+
+// Result + Status picker
+var resultPickerTarget = null;
+function openResultPicker(name) {
+  resultPickerTarget = name;
+  var s = vkidsStudents.find(function(x){ return x.name===name; });
+  document.getElementById('rp-name').textContent = name;
+  ['converted','pending','expired','loss','已转正','待转正','到期','流失'].forEach(function(r){
+    var btn = document.getElementById('rp-'+r);
+    if(btn) btn.classList.toggle('rp-active', s && s.status===r);
+  });
+  document.getElementById('result-modal').classList.add('open');
+}
+
+function pickResult(val) {
+  var s = vkidsStudents.find(function(x){ return x.name===resultPickerTarget; });
+  if(!s) return;
+  s.status    = val;
+  s.updatedAt = new Date().toISOString();
+  if(val==='converted') s.result = '报名';
+  else if(val==='expired') s.result = '到期';
+  else if(val==='loss')    s.result = '流失';
+  else if(val==='pending') s.result = '待转正';
+  else s.result = '';
+
+  renderVkids();
+  renderOverview();
+  closeModal('result-modal');
+
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'updateField', name:s.name, teacher:s.teacher, field:'status', value:s.status, updatedAt:s.updatedAt });
+  }
+
+  // 到期 → 弹出面谈提醒
+  if(val === 'expired') {
+    setTimeout(function(){ openExpiredAlert(s); }, 300);
+    return;
+  }
+
+  var labels = { converted:'⭐ 已转正', pending:'🟡 待转正', expired:'🔴 到期', loss:'❌ 流失' };
+  showToast('✅ 状态已更新：'+(labels[val]||val), 'success');
+}
+
+// 到期面谈提醒弹窗
+function openExpiredAlert(s) {
+  document.getElementById('ea-name').textContent    = s.name;
+  document.getElementById('ea-teacher').textContent = s.teacher + '老师';
+  document.getElementById('ea-phone').textContent   = s.phone || '—';
+  document.getElementById('ea-enroll').textContent  = s.enrollMonth || '—';
+  document.getElementById('expired-alert-modal').classList.add('open');
+}
+
+function renderHanyu() {
+  // ---- TRIAL ----
+  var trialTbody = document.getElementById('hanyu-trial-tbody');
+  setText('hanyu-trial-count', hanyuTrial.length+' 位');
+  if(!hanyuTrial.length) {
+    trialTbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🔵</div><h3>暂无试课学生</h3></div></td></tr>';
+  } else {
+    trialTbody.innerHTML = hanyuTrial.map(function(s,i) {
+      var sn = s.name.replace(/'/g,"\\'");
+      var ageBtn      = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'trial\','+i+',\'age\',\''+(s.age||'')+'\')">'+(s.age||'＋')+'</button>';
+      var monthBtn    = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'trial\','+i+',\'trialMonth\',\''+(s.trialMonth||'')+'\')">'+(s.trialMonth||'＋')+'</button>';
+      var consultBtn  = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'trial\','+i+',\'consultant\',\''+(s.consultant||'')+'\')">'+(s.consultant||'＋')+'</button>';
+      var sourceBtn   = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'trial\','+i+',\'source\',\''+(s.source||'')+'\')">'+(s.source||'＋')+'</button>';
+      var notesBtn    = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'trial\','+i+',\'notes\',\''+(s.notes||'')+'\')">'+(s.notes?'📝 '+s.notes.substring(0,6)+'…':'＋')+'</button>';
+      // 报名 / 流失 按钮
+      var actionBtns  = '<div style="display:flex;gap:5px;flex-wrap:wrap">'+
+        '<button class="hanyu-action-btn enroll-btn" onclick="hanyuEnrollStudent('+i+')">✅ 报名</button>'+
+        '<button class="hanyu-action-btn loss-btn"   onclick="hanyuLossStudent('+i+')">❌ 流失</button>'+
+      '</div>';
+      return '<tr>'+
+        '<td>'+s.no+'</td>'+
+        '<td><strong>'+s.name+'</strong></td>'+
+        '<td>'+ageBtn+'</td>'+
+        '<td>'+monthBtn+'</td>'+
+        '<td>'+consultBtn+'</td>'+
+        '<td>'+sourceBtn+'</td>'+
+        '<td>'+notesBtn+'</td>'+
+        '<td>'+actionBtns+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  // ---- ENROLLED ----
+  var enrolledTbody = document.getElementById('hanyu-enrolled-tbody');
+  setText('hanyu-enrolled-count', hanyuEnrolled.length+' 位');
+  if(!hanyuEnrolled.length) {
+    enrolledTbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">✅</div><h3>暂无已报学生</h3></div></td></tr>';
+  } else {
+    enrolledTbody.innerHTML = hanyuEnrolled.map(function(s,i) {
+      var sn = s.name.replace(/'/g,"\\'");
+      var ageBtn    = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'enrolled\','+i+',\'age\',\''+(s.age||'')+'\')">'+(s.age||'＋')+'</button>';
+      var monthBtn  = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'enrolled\','+i+',\'enrollMonth\',\''+(s.enrollMonth||'')+'\')">'+(s.enrollMonth||'＋')+'</button>';
+      var sourceBtn = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'enrolled\','+i+',\'source\',\''+(s.source||'')+'\')">'+(s.source||'＋')+'</button>';
+      var notesBtn  = '<button class="edit-cell-btn" onclick="openHanyuCellEdit(\'enrolled\','+i+',\'notes\',\''+(s.notes||'')+'\')">'+(s.notes?'📝 '+s.notes.substring(0,6)+'…':'＋')+'</button>';
+      // 升1年级 toggle
+      var y1btn = '<button class="inline-toggle '+(s.y1==='V'?'toggle-yes':'toggle-no')+'" onclick="toggleHanyuY1('+i+')">'+(s.y1==='V'?'✅ 是':'❌ 否')+'</button>';
+      return '<tr>'+
+        '<td>'+s.no+'</td>'+
+        '<td><strong>'+s.name+'</strong></td>'+
+        '<td>'+ageBtn+'</td>'+
+        '<td>'+monthBtn+'</td>'+
+        '<td>'+y1btn+'</td>'+
+        '<td>'+sourceBtn+'</td>'+
+        '<td>'+notesBtn+'</td>'+
+        '<td><button class="hanyu-action-btn loss-btn" onclick="hanyuRemoveEnrolled('+i+')">❌ 移除</button></td>'+
+      '</tr>';
+    }).join('');
+  }
+}
+
+// ============================================================
+// HANYU ACTIONS
+// ============================================================
+
+// 试课 → 已报（自动移动）
+function hanyuEnrollStudent(idx) {
+  var s = hanyuTrial[idx];
+  if(!s) return;
+  // 移到已报
+  var newNo = hanyuEnrolled.length + 1;
+  hanyuEnrolled.push({ no:newNo, name:s.name, age:s.age, phone:s.phone, enrollMonth:s.trialMonth||'', source:s.source, notes:s.notes });
+  hanyuTrial.splice(idx, 1);
+  // 重新编号
+  hanyuTrial.forEach(function(x,i){ x.no = i+1; });
+  hanyuEnrolled.forEach(function(x,i){ x.no = i+1; });
+  renderHanyu();
+  renderOverview();
+  showToast('✅ '+s.name+' 已移至已报学生！', 'success');
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'hanyuEnroll', name:s.name, age:s.age, enrollMonth:s.trialMonth, source:s.source });
+  }
+}
+
+// 试课流失
+function hanyuLossStudent(idx) {
+  var s = hanyuTrial[idx];
+  if(!s) return;
+  if(!confirm('确认将 '+s.name+' 标记为流失？')) return;
+  hanyuTrial.splice(idx, 1);
+  hanyuTrial.forEach(function(x,i){ x.no = i+1; });
+  renderHanyu();
+  renderOverview();
+  showToast('❌ '+s.name+' 已标记流失', '');
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite({ action:'hanyuLoss', name:s.name });
+  }
+}
+
+// 已报移除
+function hanyuRemoveEnrolled(idx) {
+  var s = hanyuEnrolled[idx];
+  if(!s) return;
+  if(!confirm('确认移除 '+s.name+'？')) return;
+  hanyuEnrolled.splice(idx, 1);
+  hanyuEnrolled.forEach(function(x,i){ x.no = i+1; });
+  renderHanyu();
+  renderOverview();
+  showToast('🗑 '+s.name+' 已移除', '');
+}
+
+// 华语认字班 单格编辑
+var hanyuCellTarget = { type:'', idx:0, field:'' };
+function openHanyuCellEdit(type, idx, field, currentVal) {
+  hanyuCellTarget = { type:type, idx:idx, field:field };
+  var s = type==='trial' ? hanyuTrial[idx] : hanyuEnrolled[idx];
+  document.getElementById('cell-modal-title').textContent = '✏️ 编辑 ' + field;
+  document.getElementById('cell-student-name').textContent = s ? s.name : '';
+  document.querySelectorAll('.cell-input-wrap').forEach(function(el){ el.style.display='none'; });
+
+  // 月份选择
+  if(field==='trialMonth'||field==='enrollMonth') {
+    document.getElementById('cell-input-select-month').style.display='block';
+    document.querySelectorAll('.month-btn').forEach(function(btn){
+      btn.style.background  = btn.textContent===currentVal?'var(--orange-main)':'';
+      btn.style.color       = btn.textContent===currentVal?'#fff':'';
+      btn.style.borderColor = btn.textContent===currentVal?'var(--orange-main)':'';
+    });
+  } else if(field==='age') {
+    document.getElementById('cell-input-select-age').style.display='block';
+  } else {
+    // text input for consultant, source, notes
+    var wrap = document.getElementById('cell-input-select-age');
+    wrap.style.display='block';
+    wrap.innerHTML='<div class="form-group"><input type="text" id="hanyu-text-input" value="'+currentVal+'" placeholder="输入内容..." style="width:100%"><button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center" onclick="saveHanyuCellEdit(document.getElementById(\'hanyu-text-input\').value)">保存</button></div>';
+  }
+  document.getElementById('cell-modal').classList.add('open');
+}
+
+function saveHanyuCellEdit(val) {
+  var arr = hanyuCellTarget.type==='trial' ? hanyuTrial : hanyuEnrolled;
+  var s = arr[hanyuCellTarget.idx];
+  if(!s) return;
+  s[hanyuCellTarget.field] = val;
+  closeModal('cell-modal');
+  renderHanyu();
+  showToast('✅ 已更新', 'success');
+}
+
+// ============================================================
+// SUMMARY TABLE — 年龄数据去重统计
+// ============================================================
+function renderSummaryTable() {
+  var tbody = document.getElementById('summary-tbody');
+  var tfoot = document.getElementById('summary-tfoot');
+  if(!tbody || !tfoot) return;
+
+  // 提取年龄数字（"5岁" → 5）
+  function parseAge(a) { return parseInt(String(a)) || 0; }
+
+  // 所有出现的年龄
+  var ages = {};
+  vkidsStudents.forEach(function(s){ var a=parseAge(s.age); if(a) ages[a]=1; });
+  hanyuEnrolled.forEach(function(s){ var a=parseAge(s.age); if(a) ages[a]=1; });
+  var ageList = Object.keys(ages).map(Number).sort();
+  if(!ageList.length) ageList = [5,6];
+
+  var totalVkids=0, totalHanyu=0, totalUnique=0, totalY1=0;
+
+  var rows = ageList.map(function(age) {
+    var vList = vkidsStudents.filter(function(s){ return parseAge(s.age)===age; });
+    var hList = hanyuEnrolled.filter(function(s){ return parseAge(s.age)===age; });
+
+    // 去重：合并两个班的学生名字
+    var allNames = {};
+    vList.forEach(function(s){ allNames[s.name]=1; });
+    hList.forEach(function(s){ allNames[s.name]=1; });
+    var uniqueCount = Object.keys(allNames).length;
+
+    // 升1年级：vkids y1=V + hanyu y1=V，两边去重
+    var y1Names = {};
+    vkidsStudents.filter(function(s){ return parseInt(s.age)===age && (s.y1==='V'||s.y1==='v'); })
+      .forEach(function(s){ y1Names[s.name]=1; });
+    hanyuEnrolled.filter(function(s){ return parseInt(s.age)===age && (s.y1==='V'||s.y1==='v'); })
+      .forEach(function(s){ y1Names[s.name]=1; });
+    var y1Count = Object.keys(y1Names).length;
+
+    var pct = uniqueCount ? Math.round(y1Count/uniqueCount*100) : 0;
+    var ageCls = age===5?'age-5':age===6?'age-6':'age-other';
+
+    // 重叠人数
+    var overlapNames = {};
+    vList.forEach(function(s){ if(hanyuEnrolled.find(function(h){return h.name===s.name;})) overlapNames[s.name]=1; });
+    var overlapCount = Object.keys(overlapNames).length;
+
+    totalVkids  += vList.length;
+    totalHanyu  += hList.length;
+    totalUnique += uniqueCount;
+    totalY1     += y1Count;
+
+    return '<tr>'+
+      '<td><span class="age-badge '+ageCls+'">'+age+'岁</span></td>'+
+      '<td>'+vList.length+'</td>'+
+      '<td>'+hList.length+(overlapCount?'<div class="overlap-note">其中 '+overlapCount+' 位同时在 Vkids</div>':'')+'</td>'+
+      '<td><strong style="font-size:16px;color:var(--orange-main)">'+uniqueCount+'</strong>'+(overlapCount?'<div class="overlap-note">去除 '+overlapCount+' 位重叠</div>':'')+'</td>'+
+      '<td><strong style="color:#2E7D32">'+y1Count+'</strong></td>'+
+      '<td><div class="pct-bar-wrap"><div class="pct-bar"><div class="pct-bar-fill" style="width:'+pct+'%"></div></div><span style="font-size:12px;font-weight:600;color:var(--text-mid)">'+pct+'%</span></div></td>'+
+    '</tr>';
+  });
+
+  tbody.innerHTML = rows.join('');
+
+  // 总计行 — 全局去重（跨年龄、跨班）
+  var allUniqueNames = {};
+  vkidsStudents.forEach(function(s){ allUniqueNames[s.name]=1; });
+  hanyuEnrolled.forEach(function(s){ allUniqueNames[s.name]=1; });
+  var grandTotal = Object.keys(allUniqueNames).length;
+
+  // 升1年级全局去重（Vkids + 认字班 两边合并）
+  var allY1Names = {};
+  vkidsStudents.filter(function(s){ return s.y1==='V'||s.y1==='v'; }).forEach(function(s){ allY1Names[s.name]=1; });
+  hanyuEnrolled.filter(function(s){ return s.y1==='V'||s.y1==='v'; }).forEach(function(s){ allY1Names[s.name]=1; });
+  var grandY1  = Object.keys(allY1Names).length;
+  var totalPct = grandTotal ? Math.round(grandY1/grandTotal*100) : 0;
+
+  tfoot.innerHTML = '<tr>'+
+    '<td>📊 合计</td>'+
+    '<td>'+totalVkids+'</td>'+
+    '<td>'+totalHanyu+'</td>'+
+    '<td>'+grandTotal+'<div class="overlap-note" style="color:var(--orange-deep)">全部去重</div></td>'+
+    '<td>'+grandY1+'<div class="overlap-note" style="color:#2E7D32">两班去重</div></td>'+
+    '<td><div class="pct-bar-wrap"><div class="pct-bar"><div class="pct-bar-fill" style="width:'+totalPct+'%"></div></div><span style="font-size:12px;font-weight:600;color:var(--orange-deep)">'+totalPct+'%</span></div></td>'+
+  '</tr>';
+}
+// ============================================================
+var CAL_DATA = {
+  6: {
+    goal: '目标：4位进生，转正：1位 · focus 拉&转正',
+    notes: ['7月份转正 7/7 面谈/CB 珊&璇&蔡', '5&6岁 PTM 幼儿园推广启蒙和vkids', '钟老师讨论booster class系统', 'con会议推广 booster'],
+    events: [
+      { week:2, title:'确认幼儿园 PTM 日期', type:'meeting' },
+      { week:2, title:'cb/面谈 7月份转正 vkids', type:'cb' },
+      { week:3, title:'约钟老师 booster class 事项', type:'meeting' },
+      { week:3, title:'cb/面谈 7月份转正 vkids', type:'cb' },
+      { week:4, title:'booster class 资料和名单准备', type:'note' },
+      { week:4, title:'cb/面谈 7月份转正 vkids + 通知 booster daily', type:'cb' },
+      { week:5, title:'post 启蒙班 video (BC) 拉生', type:'pull' },
+    ]
+  },
+  7: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['准备 update booster class 开班情况', '7月份练 junior + vkids 转正', '认字班推广－训练 junior 开班 vkids', '优化面谈格式&交流 5-6岁 学达'],
+    events: [
+      { week:1, title:'5位认字班+3位vkids+2外来 booster', type:'note' },
+      { week:2, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:2, title:'训练确认的 junior 老师开 vkids 班', type:'meeting' },
+      { week:3, title:'booster class update 人数&讨论用心', type:'note' },
+      { week:4, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:5, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+    ]
+  },
+  8: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['拉启蒙班+vkids+booster+转正', '稳生跟进'],
+    events: [
+      { week:1, title:'5位认字班+3位vkids+2外来 booster', type:'note' },
+      { week:2, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:3, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:4, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+    ]
+  },
+  9: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['继续拉生', '稳生跟进转正'],
+    events: [
+      { week:1, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:2, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:3, title:'cb/面谈 稳生转正', type:'cb' },
+      { week:4, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+    ]
+  },
+  10: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['10/11/12月份准备5/6岁开学讲座', '开小红书养（分享快乐）'],
+    events: [
+      { week:1, title:'5/6岁开学讲座准备', type:'meeting' },
+      { week:2, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:3, title:'cb/面谈 稳生转正', type:'cb' },
+      { week:4, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+    ]
+  },
+  11: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['5/6岁开学讲座', '年底稳生转正冲刺'],
+    events: [
+      { week:1, title:'5/6岁开学讲座', type:'meeting' },
+      { week:2, title:'拉启蒙班+vkids+booster+转正', type:'pull' },
+      { week:3, title:'cb/面谈 年底转正', type:'cb' },
+      { week:4, title:'年底转正冲刺', type:'cb' },
+    ]
+  },
+  12: {
+    goal: '目标：10位进生 · focus 拉&转正',
+    notes: ['年底冲刺', '明年招生准备'],
+    events: [
+      { week:1, title:'年底转正冲刺', type:'cb' },
+      { week:2, title:'拉启蒙班+vkids+booster', type:'pull' },
+      { week:3, title:'明年招生计划准备', type:'note' },
+      { week:4, title:'年终总结&明年计划', type:'meeting' },
+    ]
+  }
+};
+
+// 自定义事项（localStorage）
+var customEvents = JSON.parse(localStorage.getItem('weip_cal_events') || '{}');
+// 已完成事项
+var doneEvents = JSON.parse(localStorage.getItem('weip_cal_done') || '{}');
+
+var currentCalMonth = 6; // 默认显示6月
+
+function renderPrepTimeline() {
+  renderCalMonthTabs();
+  renderCalendar(currentCalMonth);
+}
+
+function renderCalMonthTabs() {
+  var months = [6,7,8,9,10,11,12];
+  var monthNames = {6:'6月',7:'7月',8:'8月',9:'9月',10:'10月',11:'11月',12:'12月'};
+  var html = months.map(function(m){
+    return '<button class="cal-month-tab'+(m===currentCalMonth?' active':'')+'" onclick="switchCalMonth('+m+',this)">'+monthNames[m]+'</button>';
+  }).join('');
+  document.getElementById('cal-month-tabs').innerHTML = html;
+}
+
+function switchCalMonth(m, btn) {
+  currentCalMonth = m;
+  document.querySelectorAll('.cal-month-tab').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  renderCalendar(m);
+}
+
+function prevMonth() {
+  if(currentCalMonth > 6) { currentCalMonth--; renderCalMonthTabs(); renderCalendar(currentCalMonth); }
+}
+function nextMonth() {
+  if(currentCalMonth < 12) { currentCalMonth++; renderCalMonthTabs(); renderCalendar(currentCalMonth); }
+}
+
+function renderCalendar(month) {
+  var data   = CAL_DATA[month] || { goal:'', notes:[], events:[] };
+  var custom = customEvents[month] || [];
+  var allEvents = data.events.concat(custom);
+  var done   = doneEvents[month] || {};
+
+  document.getElementById('cal-month-title').textContent = '2026年 ' + month + '月';
+  document.getElementById('cal-goal').textContent = data.goal || '—';
+  document.getElementById('tl-month-label').textContent = '2026年 ' + month + '月';
+
+  // Build calendar days
+  var firstDay = new Date(2026, month-1, 1).getDay(); // 0=Sun
+  var daysInMonth = new Date(2026, month, 0).getDate();
+  var today = new Date();
+  var isCurrentMonth = today.getFullYear()===2026 && today.getMonth()+1===month;
+
+  // Map week → events for calendar dots
+  var weekEvents = {};
+  allEvents.forEach(function(ev) {
+    var w = ev.week;
+    if(!weekEvents[w]) weekEvents[w] = [];
+    weekEvents[w].push(ev);
+  });
+
+  // Day → week mapping
+  function dayToWeek(day) {
+    return Math.ceil((day + firstDay) / 7);
+  }
+
+  var html = '';
+  // Empty cells before first day
+  for(var i=0; i<firstDay; i++) html += '<div class="cal-day other-month"></div>';
+
+  for(var d=1; d<=daysInMonth; d++) {
+    var week = dayToWeek(d);
+    var evs  = weekEvents[week] || [];
+    var isToday = isCurrentMonth && d===today.getDate();
+    var hasEv   = evs.length > 0;
+    var cls = 'cal-day' + (hasEv?' has-event':'') + (isToday?' today':'');
+    var dotHtml = hasEv && (d===1 || dayToWeek(d) !== dayToWeek(d-1))
+      ? '<div class="cal-event-dot">'+evs[0].title.substring(0,12)+'</div>' : '';
+    html += '<div class="'+cls+'" onclick="highlightWeek('+week+')"><div class="cal-day-num">'+d+'</div>'+dotHtml+'</div>';
+  }
+  document.getElementById('cal-days').innerHTML = html;
+
+  // Notes
+  document.getElementById('cal-notes-content').innerHTML = data.notes.map(function(n){
+    return '<div class="cal-note-item">'+n+'</div>';
+  }).join('') || '<div style="color:var(--text-light);font-size:12px">暂无重点记录</div>';
+
+  // Timeline events
+  var typeMap = { cb:{tag:'tag-cb',label:'CB/面谈',cls:'type-cb'}, pull:{tag:'tag-pull',label:'拉生',cls:'type-pull'}, meeting:{tag:'tag-meeting',label:'会议',cls:'type-meeting'}, note:{tag:'tag-note',label:'重点',cls:'type-note'}, custom:{tag:'tag-custom',label:'自定义',cls:'type-custom'} };
+
+  // 合并内置+自定义，标记来源
+  var builtIn = data.events.map(function(ev,i){ return Object.assign({},ev,{_src:'builtin',_idx:i}); });
+  var customs  = (customEvents[month]||[]).map(function(ev,i){ return Object.assign({},ev,{_src:'custom',_idx:i}); });
+  var allEvs   = builtIn.concat(customs);
+
+  var tlHtml = allEvs.length ? allEvs.map(function(ev,i){
+    var t = typeMap[ev.type] || typeMap.custom;
+    var doneKey = (ev.week||0)+'_'+i;
+    var isDone  = done[doneKey];
+    var titleStyle = isDone ? ' style="text-decoration:line-through;color:var(--text-light)"' : '';
+    return '<div class="tl-event-item '+t.cls+'" id="tl-ev-'+i+'">'+
+      '<div class="tl-event-date">第'+ev.week+'周</div>'+
+      '<div class="tl-event-body">'+
+        '<div class="tl-event-title"'+titleStyle+'>'+ev.title+'</div>'+
+        '<span class="tl-event-tag '+t.tag+'">'+t.label+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px;align-items:center;flex-shrink:0">'+
+        '<button class="tl-icon-btn edit-btn" onclick="openEditEvent('+month+','+i+',\''+ev._src+'\','+ev._idx+')" title="编辑">✏️</button>'+
+        '<button class="tl-icon-btn del-btn" onclick="deleteEvent('+month+','+i+',\''+ev._src+'\','+ev._idx+')" title="删除">🗑</button>'+
+        '<div class="tl-event-done'+(isDone?' done':'')+'" onclick="toggleEventDone('+month+',\''+doneKey+'\','+i+')" title="标记完成">'+(isDone?'✓':'')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="empty-state"><div class="empty-icon">📅</div><h3>暂无事项</h3><p>点击「＋ 添加事项」开始</p></div>';
+  document.getElementById('tl-events').innerHTML = tlHtml;
+}
+
+function highlightWeek(week) {
+  // Scroll timeline to that week
+  var items = document.querySelectorAll('.tl-event-item');
+  items.forEach(function(el){ el.style.background=''; });
+  document.querySelectorAll('#tl-events .tl-event-item').forEach(function(el,i){
+    var dateEl = el.querySelector('.tl-event-date');
+    if(dateEl && dateEl.textContent==='第'+week+'周') {
+      el.style.background='var(--orange-pale)';
+      el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+}
+
+function toggleEventDone(month, key, idx) {
+  if(!doneEvents[month]) doneEvents[month] = {};
+  doneEvents[month][key] = !doneEvents[month][key];
+  localStorage.setItem('weip_cal_done', JSON.stringify(doneEvents));
+  renderCalendar(month);
+}
+
+// 编辑事项
+var editEventTarget = null;
+function openEditEvent(month, listIdx, src, srcIdx) {
+  var data   = CAL_DATA[month] || { events:[] };
+  var customs = customEvents[month] || [];
+  var ev = src==='builtin' ? data.events[srcIdx] : customs[srcIdx];
+  if(!ev) return;
+
+  editEventTarget = { month:month, src:src, srcIdx:srcIdx };
+  document.getElementById('add-event-title').textContent = '✏️ 编辑事项';
+  document.getElementById('ev-month').value = month;
+  document.getElementById('ev-week').value  = ev.week || 1;
+  document.getElementById('ev-title').value = ev.title || '';
+  selectedEvType = ev.type || 'custom';
+  ['cb','pull','meeting','note','custom'].forEach(function(t){
+    document.getElementById('ev-type-'+t).classList.toggle('checked-vkids', t===selectedEvType);
+  });
+  document.getElementById('add-event-modal').classList.add('open');
+}
+
+// 删除事项
+function deleteEvent(month, listIdx, src, srcIdx) {
+  if(!confirm('确认删除这个事项？')) return;
+  if(src === 'custom') {
+    if(customEvents[month]) {
+      customEvents[month].splice(srcIdx, 1);
+      localStorage.setItem('weip_cal_events', JSON.stringify(customEvents));
+    }
+  } else {
+    // 内置事项：移到已删除记录
+    var deletedKey = 'weip_cal_deleted';
+    var deleted = JSON.parse(localStorage.getItem(deletedKey)||'{}');
+    if(!deleted[month]) deleted[month] = [];
+    deleted[month].push(srcIdx);
+    localStorage.setItem(deletedKey, JSON.stringify(deleted));
+    CAL_DATA[month].events.splice(srcIdx, 1);
+  }
+  renderCalendar(month);
+  showToast('🗑 已删除', '');
+}
+
+// Add event modal
+var selectedEvType = 'custom';
+function openAddEventModal() {
+  editEventTarget = null;
+  document.getElementById('add-event-title').textContent = '＋ 添加事项';
+  document.getElementById('ev-month').value = currentCalMonth;
+  document.getElementById('ev-week').value  = '1';
+  document.getElementById('ev-title').value = '';
+  selectedEvType = 'custom';
+  ['cb','pull','meeting','note','custom'].forEach(function(t){
+    document.getElementById('ev-type-'+t).classList.toggle('checked-vkids', t==='custom');
+  });
+  document.getElementById('add-event-modal').classList.add('open');
+}
+function selectEvType(t) {
+  selectedEvType = t;
+  ['cb','pull','meeting','note','custom'].forEach(function(x){
+    document.getElementById('ev-type-'+x).classList.toggle('checked-vkids', x===t);
+  });
+}
+function saveEvent() {
+  var month = parseInt(document.getElementById('ev-month').value);
+  var week  = parseInt(document.getElementById('ev-week').value);
+  var title = document.getElementById('ev-title').value.trim();
+  if(!title){ showToast('请输入事项内容','error'); return; }
+
+  if(editEventTarget) {
+    // 编辑模式
+    var m = editEventTarget.month;
+    if(editEventTarget.src === 'custom') {
+      if(customEvents[m] && customEvents[m][editEventTarget.srcIdx]) {
+        customEvents[m][editEventTarget.srcIdx] = { week:week, title:title, type:selectedEvType };
+        localStorage.setItem('weip_cal_events', JSON.stringify(customEvents));
+      }
+    } else {
+      if(CAL_DATA[m] && CAL_DATA[m].events[editEventTarget.srcIdx]) {
+        CAL_DATA[m].events[editEventTarget.srcIdx] = { week:week, title:title, type:selectedEvType };
+      }
+    }
+    editEventTarget = null;
+    showToast('✅ 事项已更新', 'success');
+  } else {
+    // 新增模式
+    if(!customEvents[month]) customEvents[month] = [];
+    customEvents[month].push({ week:week, title:title, type:selectedEvType });
+    localStorage.setItem('weip_cal_events', JSON.stringify(customEvents));
+    showToast('✅ 事项已添加', 'success');
+  }
+
+  closeModal('add-event-modal');
+  renderCalendar(currentCalMonth);
+}
+
+function renderPrepStats() {
+  var y1 = vkidsStudents.filter(function(s){return s.y1==='V';});
+  setText('prep-total', y1.length);
+  setText('prep-ready', y1.filter(function(s){return s.status==='converted';}).length);
+  setText('prep-pending', y1.filter(function(s){return s.status!=='converted';}).length);
+}
+
+function updateNavBadges() {
+  var vPending = vkidsStudents.filter(function(s){return s.status==='pending'||s.status==='trial';}).length;
+  var hTrial   = hanyuTrial.length;
+  setText('nav-vkids', vPending);
+  setText('nav-hanyu', hTrial);
+}
+
+// ============================================================
+// FILTER
+// ============================================================
+function setVkidsTeacher(t, btn) {
+  currentVkidsTeacher = t;
+  document.querySelectorAll('.teacher-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderVkids();
+}
+function setVkidsStatus(s, btn) {
+  currentVkidsStatus = s;
+  document.querySelectorAll('#page-vkids .filter-chip').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderVkids();
+}
+
+// ============================================================
+// CONVERT MODAL
+// ============================================================
+function openConvertModal(name) {
+  var s = vkidsStudents.find(function(x){return x.name===name;});
+  if(!s) return;
+  convertTarget = s;
+  document.getElementById('cm-name').textContent = s.name;
+  document.getElementById('cm-meta').textContent = (s.age||'')+'　班主任：'+(s.teacher||'')+'　报名：'+(s.enrollMonth||'—');
+  document.getElementById('cm-month').value = '';
+  document.getElementById('cm-result').value = '';
+  document.getElementById('convert-modal').classList.add('open');
+}
+
+function saveConvert() {
+  if(!convertTarget){ closeModal('convert-modal'); return; }
+  var month = document.getElementById('cm-month').value;
+  var result = document.getElementById('cm-result').value;
+  if(!month){ showToast('请选择转正月份', 'error'); return; }
+
+  var btn = document.getElementById('cm-save-btn');
+  btn.innerHTML = '<span class="loading-spinner"></span> 保存中...';
+  btn.disabled = true;
+
+  var payload = { action:'convert', name:convertTarget.name, teacher:convertTarget.teacher, convertMonth:month, result:result };
+
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite(payload)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(data.success){
+          convertTarget.convertMonth = month;
+          convertTarget.status = 'converted';
+          convertTarget.result = result;
+          renderAll();
+          closeModal('convert-modal');
+          showToast('✅ '+convertTarget.name+' 已转正！', 'success');
+        } else {
+          showToast('保存失败：'+(data.message||''), 'error');
+        }
+      })
+      .catch(function(){ showToast('网络错误，请重试', 'error'); })
+      .finally(function(){ btn.innerHTML='✅ 确认转正'; btn.disabled=false; });
+  } else {
+    // Demo mode
+    convertTarget.convertMonth = month;
+    convertTarget.status = 'converted';
+    convertTarget.result = result;
+    renderAll();
+    closeModal('convert-modal');
+    showToast('✅ '+convertTarget.name+' 已转正！（演示模式）', 'success');
+    btn.innerHTML='✅ 确认转正'; btn.disabled=false;
+  }
+}
+
+// ============================================================
+// ADD STUDENT MODAL
+// ============================================================
+function openAddModal(cls) {
+  document.getElementById('f-name').value='';
+  document.getElementById('f-age').value='';
+  document.getElementById('f-teacher').value='';
+  document.getElementById('f-month').value='';
+  document.getElementById('f-phone').value='';
+  document.getElementById('f-y1').value='';
+  document.getElementById('f-notes').value='';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function saveNewStudent() {
+  var name = document.getElementById('f-name').value.trim();
+  if(!name){ showToast('请输入学生姓名', 'error'); return; }
+  var payload = {
+    action:'add',
+    name:name,
+    age:document.getElementById('f-age').value,
+    teacher:document.getElementById('f-teacher').value,
+    enrollMonth:document.getElementById('f-month').value,
+    phone:document.getElementById('f-phone').value,
+    y1:document.getElementById('f-y1').value,
+    notes:document.getElementById('f-notes').value,
+  };
+
+  var btn = document.getElementById('add-save-btn');
+  btn.innerHTML='<span class="loading-spinner"></span>';
+  btn.disabled=true;
+
+  if(GAS_URL !== 'YOUR_GAS_URL_HERE') {
+    gasWrite(payload)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(data.success){ syncAll(); closeModal('add-modal'); showToast('✅ 学生已添加', 'success'); }
+        else showToast('失败：'+(data.message||''), 'error');
+      })
+      .catch(function(){ showToast('网络错误', 'error'); })
+      .finally(function(){ btn.innerHTML='💾 保存'; btn.disabled=false; });
+  } else {
+    vkidsStudents.push({ name:payload.name, age:payload.age, teacher:payload.teacher, enrollMonth:payload.enrollMonth, phone:payload.phone, y1:payload.y1, notes:payload.notes, status:'trial', convertMonth:'', result:'', payment:'' });
+    renderAll();
+    closeModal('add-modal');
+    showToast('✅ '+name+' 已添加（演示模式）', 'success');
+    btn.innerHTML='💾 保存'; btn.disabled=false;
+  }
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV(type) {
+  var headers, rows;
+  if(type==='vkids') {
+    headers=['姓名','年龄','班主任','报名月份','转正月份','是否升1年级','付款','跟进结果','状态'];
+    rows=vkidsStudents.map(function(s){return[s.name,s.age,s.teacher,s.enrollMonth,s.convertMonth,s.y1,s.payment,s.result,s.status];});
+  } else {
+    headers=['类型','编号','姓名','年龄','月份','备注'];
+    rows=hanyuTrial.map(function(s){return['试课',s.no,s.name,s.age,s.trialMonth,s.notes];})
+      .concat(hanyuEnrolled.map(function(s){return['已报',s.no,s.name,s.age,s.enrollMonth,s.notes];}));
+  }
+  var csv=[headers].concat(rows).map(function(r){return r.map(function(v){return '"'+(v||'')+'"';}).join(',');}).join('\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='WeIP_'+type+'_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';
+  a.click();
+  showToast('📥 CSV 已导出', 'success');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector('[onclick="showPage(\''+page+'\')"]').classList.add('active');
+  var titles={overview:['🏠 总目标总览','2026年 · 实时同步 Google Sheet'],vkids:['⭐ Vkids 转正班','VKIDS 5岁2025 + 稳生 2026 合并数据'],hanyu:['📖 华语认字班','华语认字班 2026学生名单'],booster:['⚡ Booster Class','即将开放'],prep:['🎒 1年级衔接时间线','追踪升小学学生进度']};
+  setText('page-title', titles[page][0]);
+  setText('page-subtitle', titles[page][1]);
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function setText(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; }
+function setWidth(id,pct){ var el=document.getElementById(id); if(el) el.style.width=Math.min(100,Math.max(0,pct))+'%'; }
+function timeNow(){ return new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}); }
+function countThisMonth(){
+  var m=new Date().getMonth()+1;
+  var map={'1月':1,'2月':2,'3月':3,'4月':4,'5月':5,'6月':6,'7月':7,'8月':8,'9月':9,'10月':10,'11月':11,'12月':12};
+  return vkidsStudents.filter(function(s){return map[s.enrollMonth]===m;}).length + hanyuEnrolled.filter(function(s){return map[s.enrollMonth]===m;}).length;
+}
+function statusBadge(s){
+  var map={
+    'active':['active','✅ 在读'],'trial':['trial','🔵 试课中'],
+    'converted':['converted','⭐ 已转正'],'pending':['pending','🟡 待转正'],
+    'expired':['expired','🔴 到期'],'loss':['loss','❌ 流失'],
+    '已转正':['converted','⭐ 已转正'],'待转正':['pending','🟡 待转正'],
+    '到期':['expired','🔴 到期'],'流失':['loss','❌ 流失'],
+  };
+  var r=map[s]||['pending','＋ 选择'];
+  return '<span class="status-badge '+r[0]+'">'+r[1]+'</span>';
+}
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+(type||'');
+  setTimeout(function(){t.classList.remove('show');},3200);
+}
+
+// Close modals on overlay click
+['convert-modal','add-modal','target-modal','result-modal','cell-modal','notes-modal','expired-alert-modal','add-event-modal'].forEach(function(id){
+  document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) closeModal(id); });
+});
+
+// ============================================================
+// TARGET EDIT
+// ============================================================
+var TARGETS = {
+  vkids:   parseInt(localStorage.getItem('target_vkids')  || '40'),
+  hanyu:   parseInt(localStorage.getItem('target_hanyu')  || '20'),
+  booster: parseInt(localStorage.getItem('target_booster')|| '0'),
+};
+
+function openTargetModal() {
+  document.getElementById('t-vkids').value   = TARGETS.vkids;
+  document.getElementById('t-hanyu').value   = TARGETS.hanyu;
+  document.getElementById('t-booster').value = TARGETS.booster;
+  updateTargetPreview();
+  document.getElementById('target-modal').classList.add('open');
+}
+
+function updateTargetPreview() {
+  var v = parseInt(document.getElementById('t-vkids').value)   || 0;
+  var h = parseInt(document.getElementById('t-hanyu').value)   || 0;
+  var b = parseInt(document.getElementById('t-booster').value) || 0;
+  document.getElementById('t-preview').textContent = (v + h + b);
+}
+
+function saveTarget() {
+  var v = parseInt(document.getElementById('t-vkids').value)   || 0;
+  var h = parseInt(document.getElementById('t-hanyu').value)   || 0;
+  var b = parseInt(document.getElementById('t-booster').value) || 0;
+  if (!v && !h) { showToast('请至少填入一个目标人数', 'error'); return; }
+  TARGETS.vkids   = v;
+  TARGETS.hanyu   = h;
+  TARGETS.booster = b;
+  localStorage.setItem('target_vkids',   v);
+  localStorage.setItem('target_hanyu',   h);
+  localStorage.setItem('target_booster', b);
+  closeModal('target-modal');
+  renderOverview();
+  showToast('✅ 目标已更新：共 '+(v+h+b)+' 位', 'success');
+}
+
+// Live preview in modal
+document.addEventListener('input', function(e) {
+  if(['t-vkids','t-hanyu','t-booster'].indexOf(e.target.id) !== -1) updateTargetPreview();
+});
+</script>
+</body>
+</html>
