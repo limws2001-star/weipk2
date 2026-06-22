@@ -1073,9 +1073,11 @@ function gasWrite(payload) {
     return encodeURIComponent(k) + '=' + encodeURIComponent(JSON.stringify(payload[k]));
   }).join('&');
   var url = GAS_URL + '?' + params;
-  // 用 no-cors 模式跟随重定向，fire-and-forget
-  fetch(url, { method:'GET', mode:'no-cors', redirect:'follow' })
-    .catch(function(){});
+  // 用 Image ping 方式绕过 CORS — fire and forget
+  var img = new Image();
+  img.src = url;
+  // 同时用 fetch no-cors 确保请求发出
+  fetch(url, {mode:'no-cors', redirect:'follow'}).catch(function(){});
   return Promise.resolve({success:true});
 }
 
